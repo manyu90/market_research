@@ -17,7 +17,7 @@ This is not AI news. This is **AI supply chain stress**.
 
 The system's top themes by event volume were memory (SK Hynix, Samsung, Micron — HBM allocation, pricing, capex) and compute silicon (TSMC CoWoS capacity, NVIDIA supply). No surprise — those are consensus trades and well-covered in English. The system detects them, but that's table stakes.
 
-The interesting finds are the ones below — deeper in the stack, invisible to English-only research, and not yet priced in. Each traces the causal chain: demand driver → constraint layer → scarce object → supplier → capacity/lead time.
+The interesting finds are the ones further down the stack — the kind of thing that doesn't show up if you only read English-language sources. Each traces the causal chain: demand driver → constraint layer → scarce object → supplier → capacity/lead time.
 
 **Nittobo (3110.TSE)** — AI packaging needs advanced substrates. Substrates need T-Glass / glass fiber cloth. Nittobo is the dominant supplier. Japanese, Korean, and Taiwanese sources all independently flagged tightening — allocation language, lead time extensions, capacity fully booked. This company barely appears in English financial media. Ring A pure play on the substrates bottleneck.
 
