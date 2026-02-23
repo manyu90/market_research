@@ -1,35 +1,8 @@
 # Market Research Radar
 
-A 24/7 autonomous system that detects emerging supply chain bottlenecks before they become consensus. Ingests global multi-language sources, extracts structured constraint events via LLM, clusters them into themes with tightening scores, and tracks which companies are affected — as suppliers (beneficiaries) or buyers (squeezed).
+A multi-radar platform that detects emerging supply chain bottlenecks and structural constraints before they become consensus. Ingests global multi-language sources, extracts structured constraint events via LLM, clusters them into themes with tightening scores, and tracks affected companies (suppliers as beneficiaries, buyers as squeezed).
 
-Built for investment research. The system surfaces tradable signals from the gap between when a constraint appears in niche trade press (Japanese, Korean, Chinese, Taiwanese) and when it hits mainstream English-language financial media.
-
-## Current Radar: AI Supply Chain Constraints
-
-The first radar tracks bottlenecks across the AI infrastructure stack:
-
-| Layer | What's constrained | Example signals found |
-|-------|-------------------|----------------------|
-| **Memory** | HBM, DRAM, NAND, HDD | SK Hynix $14B packaging fab, memory prices doubled, HDDs sold out for 2025 |
-| **Substrates & Films** | T-Glass, ABF film, CCL, glass fiber | Nittobo single-source risk, Ajinomoto ABF monopoly, glass fiber shortage |
-| **Compute Silicon** | Foundry capacity, InP wafers, SiC | TSMC CoWoS bottleneck, AXT InP wafer monopoly, US export controls |
-| **Advanced Packaging** | CoWoS, HBM assembly, OSAT | ASE/King Yuan capacity, Tata India OSAT entry |
-| **Power Delivery** | Transformers, switchgear | Siemens Energy/GE Vernova 2-3 year lead times |
-| **Datacenter Build** | Grid interconnection, permitting | PJM multi-year queue, Virginia/Texas/California backlogs |
-| **Thermal Cooling** | Liquid cooling systems | Vertiv, Schneider, Envicool capacity race |
-| **PCB Materials** | Drill bits, laminates | Korean micro drill bit bottleneck (Neotis) |
-| **Interconnect** | Optical transceivers, HVDC | Transmission expansion for datacenter power |
-| **Fuel / Onsite Power** | Natural gas, geothermal | Shadow power plants, Ormat geothermal for datacenters |
-
-### What it found (first run)
-
-248 structured constraint events from 698 articles across 10 languages. 43 emerging themes tracked. Key discoveries that were invisible in English-only sources:
-
-- **Nittobo (3110.TSE)** — Dominant T-Glass supplier. Japanese/Korean/Taiwanese searches independently confirmed the glass fiber bottleneck. Tightening score 0.62.
-- **AXT Inc (AXTI)** — Indium Phosphide wafer monopoly for optical transceivers connecting AI clusters. Micro-cap, pure-play bottleneck.
-- **Neotis** (Korean) — Micro drill bits for PCB manufacturing. Samsung Electro-Mechanics and LG Innotek are dependent. Korean-language discovery only.
-- **Grid interconnection queues** — PJM, Southern Company. Datacenter builds bottlenecked not by land but by multi-year power grid connection backlogs.
-- **Copper mining** (BHP, Lundin) — Advanced packaging copper demand. LATAM sources surfaced Argentina/Chile mining constraints.
+Built for investment research. Surfaces tradable signals from the gap between when a constraint appears in niche trade press (Japanese, Korean, Chinese, Taiwanese) and when it hits mainstream English-language financial media.
 
 ## Architecture
 
@@ -44,9 +17,9 @@ Web search (10)     →       ↑ asyncio.gather (5 concurrent LLM calls)
 ```
 
 - **Postgres 16** — data store AND work queue (`SELECT FOR UPDATE SKIP LOCKED`). No Redis needed.
-- **MiniMax M2.5** via OpenRouter — single LLM model handles translation, extraction, and thesis generation.
+- **Single LLM** via OpenRouter — handles translation, extraction, and thesis generation.
 - **10 languages** — EN, JA, KO, ZH, ZH-TW, ES, PT, DE, HI + SE Asian English
-- **Docker Compose** with `restart: always` — runs unattended.
+- **Docker Compose** with `restart: always` — runs unattended 24/7.
 
 ## Quick Start
 
@@ -55,14 +28,14 @@ Web search (10)     →       ↑ asyncio.gather (5 concurrent LLM calls)
 cp .env.example .env
 # Edit .env: add OPENROUTER_API_KEY and SERPER_API_KEY
 
-# 2. Start Postgres + Pipeline
+# 2. Start everything
 docker compose up -d
 
 # 3. Seed the database (first time only)
 docker compose exec pipeline python scripts/seed_db.py
 
 # The pipeline will automatically:
-#   - Collect from all sources
+#   - Collect from all sources every 1-4 hours
 #   - Translate non-English articles
 #   - Link entities (companies, products)
 #   - Extract structured constraint events via LLM
@@ -91,12 +64,26 @@ asyncio.run(check())
 "
 ```
 
+## How It Works
+
+**Collection** — The scheduler triggers collection jobs per source (configurable intervals). Web search rotates keyword queries in 10 languages. RSS and scrapers pull from known publications. New items enter the DB as `COLLECTED`.
+
+**Extraction** — The LLM reads each article and extracts structured `ConstraintEvent` objects: event type (LEAD_TIME_EXTENDED, ALLOCATION, PRICE_INCREASE, CAPEX_ANNOUNCED, etc.), constraint layer, direction (TIGHTENING/EASING/MIXED), affected entities with roles, magnitude (price %, capex USD, lead time weeks), and timing.
+
+**Themes & Scoring** — Events are clustered by (constraint_layer + shared objects). Each theme gets a tightening score (`0.35*velocity + 0.20*breadth + 0.20*quality + 0.15*allocation + 0.10*novelty`). Themes progress: CANDIDATE → EMERGING → CONFIRMED → CONSENSUS. Most valuable at CANDIDATE/EMERGING — before the market prices it in.
+
+**Entity Discovery** — When the LLM extracts an entity not in the registry, it's logged as DISCOVERED and promoted after enough mentions. This is how niche suppliers get surfaced automatically.
+
+### What kind of results does it produce?
+
+The system finds constraint themes across supply chain layers — materials shortages, capacity bottlenecks, lead time extensions, single-source dependencies — and tracks which companies sit on each side. It surfaces niche suppliers invisible to English-only research (e.g. monopoly substrate makers found via Japanese/Korean sources), detects tightening trends before they hit mainstream media, and scores how severe each bottleneck is becoming over time.
+
 ## Project Structure
 
 ```
 config/
-  seed_sources.yml      # 46 bootstrap sources (RSS, scrape, search)
-  seed_entities.yml     # 41 seed entities with cross-language aliases
+  seed_sources.yml      # Bootstrap sources (RSS, scrape, search)
+  seed_entities.yml     # Seed entities with cross-language aliases
   llm.yml               # LLM provider config (OpenRouter)
 migrations/
   001_initial_schema.sql  # sources, items, entities, events
@@ -119,52 +106,38 @@ src/
   settings.py           # pydantic-settings, loads .env + YAML
 ```
 
-## How It Works
+## Planned Radars
 
-### Collection
-Every 1-4 hours (configurable per source), the scheduler triggers collection jobs. Web search rotates through keyword queries in 10 languages, discovering articles from any domain. RSS and scrapers pull from known publications. New items enter the DB as `COLLECTED`.
+The architecture — multi-language collection, LLM extraction, entity tracking, theme clustering — is general-purpose. Each radar gets its own spec file (in `radars/`), seed sources, seed entities, and extraction prompts. The pipeline and infrastructure are shared.
 
-### Extraction
-The LLM reads each article and extracts zero or more structured `ConstraintEvent` objects:
-- **event_type**: LEAD_TIME_EXTENDED, ALLOCATION, PRICE_INCREASE, CAPEX_ANNOUNCED, CAPACITY_ONLINE, YIELD_ISSUE, DISRUPTION, POLICY_RESTRICTION, QUALIFICATION_DELAY
-- **constraint_layer**: which part of the stack
-- **direction**: TIGHTENING, EASING, or MIXED
-- **entities**: companies with roles (SUPPLIER, BUYER, DEMAND_DRIVER, OEM, REGULATOR)
-- **magnitude**: concrete numbers (price change %, capex USD, lead time weeks, capacity delta)
-- **timing**: when it happened, when reported, expected relief window
+**Radar 1 — AI Eats the World: Constraint Hunter** (live)
+Detects the next AI supply chain bottleneck early. Tracks compute, memory, packaging, interconnect, power, cooling, and materials. Sources: supplier earnings, niche packaging/PCB publications, Asian supply chain media. Focus is AI supply chain *stress*, not AI news.
 
-The extraction prompt includes a reference list of key suppliers per material (e.g., "glass fiber → Nittobo") so the LLM tags relevant companies even when they're not named in the article.
+**Radar 2 — Grid + Power Buildout**
+AI + reindustrialization is power-limited; the grid is the hidden throttle. Signals: transformer backlog, switchgear lead times, interconnect approvals, turbine order books. Sources: utility commission filings, equipment OEM commentary, regional permitting news.
 
-### Themes & Scoring
-Events are clustered by (constraint_layer + shared objects). Each theme gets a tightening score:
+**Radar 3 — Industrial Materials & Specialty Chemicals**
+"Boring inputs" become huge trades when one spec dominates. Signals: purity constraints, yield issues, qualification delays, single-factory dependencies. Sources: trade journals, supplier PR, plant expansions, environmental/regulatory actions.
 
-```
-0.35 × velocity  +  0.20 × breadth  +  0.20 × quality  +  0.15 × allocation  +  0.10 × novelty
-```
+**Radar 4 — Precious Metals + Miners (Local-Language Edge)**
+Detect early capex, permitting, billionaire flows, jurisdiction shifts. Signals: new mines financed, royalty/tax changes, political risk. Sources: Spanish/LatAm outlets, provincial bulletins, local regulators, company decks.
 
-Themes progress: CANDIDATE → EMERGING → CONFIRMED → CONSENSUS. The system is most valuable at the CANDIDATE/EMERGING stage — before the market prices it in.
+**Radar 5 — Credit/Liquidity Stress & Forced Selling**
+Catch structure breaks — when financing or leverage forces repricing. Signals: fund gating, covenant stress, spreads, refinancing walls, margin changes. Sources: filings, credit commentary, finance press, earnings risk language.
 
-### Entity Discovery
-The system doesn't just track known companies. When the LLM extracts an entity not in the registry, it's logged as DISCOVERED. After enough mentions, it promotes to CONFIRMED. This is how niche suppliers like Neotis (Korean micro drill bits) or Guangyuan New Materials (Chinese CCL) get surfaced automatically.
+**Radar 6 — Geopolitics / Export Controls / Industrial Policy**
+Themes often begin as policy constraints. Signals: export bans, subsidies, procurement ramps, strategic stockpile changes. Sources: government releases, official registers, tender portals, sanctions lists.
 
-## Future Radars
+**Radar 7 — Shipping / Logistics / Chokepoints**
+Physical constraints leak into prices early via logistics. Signals: freight spikes, port disruptions, insurance rates, rerouting, canal issues. Sources: shipping industry sources, port authority updates, marine insurance.
 
-This system is designed as a **multi-radar platform**. The AI supply chain radar is the first instance. The architecture — multi-language collection, LLM extraction, entity tracking, theme clustering — is general-purpose. Future radars will track different supply chains and constraint domains:
-
-- **Energy Transition** — transformer lead times, grid interconnection queues, copper/lithium/rare earth supply, permitting bottlenecks for renewables and nuclear
-- **Defense & Aerospace** — munitions production capacity, titanium supply, semiconductor export controls, shipbuilding backlogs
-- **Pharma & Biotech** — API (active pharmaceutical ingredient) sourcing, CDMO capacity, FDA approval queues, cold chain logistics
-- **Agriculture & Food** — fertilizer supply (potash, phosphate), shipping route disruptions, weather-driven crop constraints, food processing capacity
-- **Construction & Real Estate** — cement, steel, skilled labor shortages, permitting timelines, interest rate sensitivity on project pipelines
-- **Automotive** — EV battery supply chain (cathode, anode, separator), legacy ICE component wind-down, ADAS sensor supply
-
-Each radar gets its own spec file (in `radars/`), seed sources, seed entities, and extraction prompts. The pipeline, database schema, and infrastructure are shared. Adding a new radar means writing a spec and config — the collection, extraction, and scoring machinery is already built.
+**Radar 8 — Country-Specific Capital Rotation**
+Some themes express through countries (indexes + policy + champions). Signals: local capex, pension flows, currency policy, national subsidy stacks. Sources: local-language business press, gov policy, conglomerate disclosures.
 
 ## Cost
 
-Running costs are minimal:
-- **LLM (OpenRouter/MiniMax M2.5)**: ~$2-5/day depending on article volume
-- **Web search (Serper.dev)**: ~$6/month for 10-language coverage (~200 queries/day)
+- **LLM** (OpenRouter): ~$2-5/day depending on article volume
+- **Web search** (Serper.dev): ~$6/month for 10-language coverage
 - **Infrastructure**: Single VPS (Hetzner CX32, ~$15/month) runs everything
 
 ## Tech Stack
