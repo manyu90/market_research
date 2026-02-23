@@ -13,21 +13,21 @@ This system reads those sources. It ingests niche trade press in 10 languages, e
 
 This is not AI news. This is **AI supply chain stress**.
 
-## What it found (first run — 698 articles, 10 languages, 43 themes)
+## What it found (first run, Feb 2026 — 698 articles, 10 languages, 43 themes)
 
 The system's top themes by event volume were memory (SK Hynix, Samsung, Micron — HBM allocation, pricing, capex) and compute silicon (TSMC CoWoS capacity, NVIDIA supply). No surprise — those are consensus trades and well-covered in English. The system detects them, but that's table stakes.
 
 The interesting finds are the ones further down the stack — the kind of thing that doesn't show up if you only read English-language sources. Each traces the causal chain: demand driver → constraint layer → scarce object → supplier → capacity/lead time.
 
-**Nittobo (3110.TSE)** — AI packaging needs advanced substrates. Substrates need T-Glass / glass fiber cloth. Nittobo is the dominant supplier. Japanese, Korean, and Taiwanese sources all independently flagged tightening — allocation language, lead time extensions, capacity fully booked. This company barely appears in English financial media. Ring A pure play on the substrates bottleneck.
+**Nittobo (3110.TSE)** *(as of Feb 22, 2026)* — AI packaging needs advanced substrates. Substrates need T-Glass / glass fiber cloth. Nittobo is the dominant supplier. Japanese, Korean, and Taiwanese sources all independently flagged tightening — allocation language, lead time extensions, capacity fully booked. This company barely appears in English financial media. Ring A pure play on the substrates bottleneck.
 
-**AXT Inc (AXTI)** — GPU clusters need optical transceivers to interconnect. Transceivers need Indium Phosphide wafers. AXT has a near-monopoly on InP substrates. Micro-cap, pure-play on the AI interconnect layer. Found by cross-referencing Asian semiconductor supply chain coverage that English sources hadn't picked up yet.
+**AXT Inc (AXTI)** *(as of Feb 22, 2026)* — GPU clusters need optical transceivers to interconnect. Transceivers need Indium Phosphide wafers. AXT has a near-monopoly on InP substrates. Micro-cap, pure-play on the AI interconnect layer. Found by cross-referencing Asian semiconductor supply chain coverage that English sources hadn't picked up yet.
 
-**Neotis** — AI servers need HDI PCBs. PCBs need laser-drilled microvias. The micro drill bits come from Neotis in Korea. Samsung Electro-Mechanics and LG Innotek depend on them. Surfaced exclusively from Korean-language sources — zero English coverage exists. This is why multi-language ingestion matters.
+**Neotis** *(as of Feb 22, 2026)* — AI servers need HDI PCBs. PCBs need laser-drilled microvias. The micro drill bits come from Neotis in Korea. Samsung Electro-Mechanics and LG Innotek depend on them. Surfaced exclusively from Korean-language sources — zero English coverage exists. This is why multi-language ingestion matters.
 
-**Grid interconnection queues** — Every new AI datacenter needs grid power. The bottleneck isn't land or capital — it's multi-year power grid connection queues (PJM, Southern Company). The entire AI buildout is physically gated by how fast utilities can hook up new load. Constraint layer: DATACENTER_BUILD_PERMIT.
+**Grid interconnection queues** *(as of Feb 22, 2026)* — Every new AI datacenter needs grid power. The bottleneck isn't land or capital — it's multi-year power grid connection queues (PJM, Southern Company). The entire AI buildout is physically gated by how fast utilities can hook up new load. Constraint layer: DATACENTER_BUILD_PERMIT.
 
-**Copper for advanced packaging** — HBM and CoWoS packaging (the stuff that stacks memory on GPUs) are copper-intensive. LATAM sources surfaced mining constraints in Argentina and Chile that map directly to AI packaging capacity timelines. Spanish/Portuguese-language discovery.
+**Copper for advanced packaging** *(as of Feb 22, 2026)* — HBM and CoWoS packaging (the stuff that stacks memory on GPUs) are copper-intensive. LATAM sources surfaced mining constraints in Argentina and Chile that map directly to AI packaging capacity timelines. Spanish/Portuguese-language discovery.
 
 248 structured constraint events across 10 layers. Each event has: type, direction (tightening/easing), affected entities with roles, magnitude (price %, capex $, lead time weeks), timing, and source evidence. Each theme has a tightening score, a living thesis, beneficiaries (Ring A/B/C), and invalidation triggers.
 
