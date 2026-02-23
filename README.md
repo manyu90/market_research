@@ -2,23 +2,27 @@
 
 Finds supply chain bottlenecks before Wall Street does.
 
-This system reads niche trade press in 10 languages — Japanese semiconductor journals, Korean PCB industry newsletters, Taiwanese substrate reports, Brazilian mining bulletins — and extracts structured "constraint events" using an LLM. It clusters them into themes, scores how tight each bottleneck is getting, and tells you which companies are on each side: suppliers who benefit, and buyers who get squeezed.
+The current radar tracks **AI supply chain stress** — every physical layer that has to scale for the AI buildout to continue. Not AI news. The actual bottlenecks: who makes the glass fiber for the substrates, who has the InP wafers for the optical interconnect, who's blocking the power grid hookups for the datacenters, where the copper comes from for advanced packaging. The stuff that constrains how fast AI infrastructure can actually get built.
 
-The edge is language and speed. A glass fiber shortage shows up in Japanese trade press weeks before it hits English-language analyst notes. By the time CNBC runs the story, the move is done.
+The system reads niche trade press in 10 languages — Japanese semiconductor journals, Korean PCB industry newsletters, Taiwanese substrate reports, Brazilian mining bulletins — extracts structured "constraint events" via LLM, clusters them into scored themes, and tells you which companies are on each side: suppliers who benefit, and buyers who get squeezed.
+
+The edge is language and speed. A glass fiber shortage for AI substrates shows up in Japanese trade press weeks before it hits English-language analyst notes. By the time CNBC runs the story, the move is done.
 
 ## What it found (first run, 698 articles, 10 languages)
 
-**Nittobo (3110.TSE)** — T-Glass / glass fiber cloth is a chokepoint for advanced substrates used in AI packaging. Nittobo is the dominant supplier. Japanese, Korean, and Taiwanese sources all independently flagged tightening. This company barely appears in English financial media.
+Every example below is a chokepoint in the AI infrastructure stack.
 
-**AXT Inc (AXTI)** — Indium Phosphide wafer monopoly. InP wafers are the substrate for optical transceivers that connect GPU clusters. Micro-cap, pure-play on the interconnect bottleneck. Found via cross-referencing Asian semiconductor supply chain coverage.
+**Nittobo (3110.TSE)** — The AI buildout needs advanced substrates (ABF, glass core). Those substrates need T-Glass / glass fiber cloth. Nittobo is the dominant supplier. Japanese, Korean, and Taiwanese sources all independently flagged tightening. This company barely appears in English financial media, but it sits directly in the critical path of AI packaging.
 
-**Neotis** — Micro drill bits for PCB manufacturing. Samsung Electro-Mechanics and LG Innotek depend on them. Surfaced exclusively from Korean-language sources. No English coverage exists.
+**AXT Inc (AXTI)** — GPU clusters need optical transceivers to talk to each other. Those transceivers need Indium Phosphide wafers. AXT has a near-monopoly. Micro-cap, pure-play on the AI interconnect bottleneck. Found via Asian semiconductor supply chain coverage.
 
-**Grid interconnection queues** — Datacenter builds aren't bottlenecked by land or capital. They're stuck in multi-year power grid connection queues (PJM, Southern Company). Found across US utility filings and regional energy press.
+**Neotis** — AI servers need HDI PCBs. Those PCBs need laser-drilled microvias. The micro drill bits come from Neotis in Korea. Samsung Electro-Mechanics and LG Innotek depend on them. Surfaced exclusively from Korean-language sources — zero English coverage.
 
-**Copper for advanced packaging** — HBM and CoWoS packaging are copper-intensive. LATAM sources surfaced mining constraints in Argentina and Chile that connect directly to packaging capacity timelines.
+**Grid interconnection queues** — Every new AI datacenter needs grid power. The bottleneck isn't land or capital — it's multi-year power grid connection queues (PJM, Southern Company). The AI buildout is physically gated by how fast utilities can hook up new load.
 
-248 structured constraint events. 43 emerging themes. Suppliers, buyers, tightening scores, and a thesis for each.
+**Copper for advanced packaging** — HBM and CoWoS packaging (the stuff that stacks memory on GPUs) are copper-intensive. LATAM sources surfaced mining constraints in Argentina and Chile that connect directly to AI packaging capacity timelines.
+
+248 structured constraint events. 43 emerging themes across memory, substrates, compute silicon, advanced packaging, power delivery, datacenter build, cooling, PCB materials, interconnect, and fuel. Suppliers, buyers, tightening scores, and a thesis for each.
 
 ## How it works
 
