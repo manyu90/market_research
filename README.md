@@ -1,145 +1,85 @@
 # Market Research Radar
 
-A multi-radar platform that detects emerging supply chain bottlenecks and structural constraints before they become consensus. Ingests global multi-language sources, extracts structured constraint events via LLM, clusters them into themes with tightening scores, and tracks affected companies (suppliers as beneficiaries, buyers as squeezed).
+Finds supply chain bottlenecks before Wall Street does.
 
-Built for investment research. Surfaces tradable signals from the gap between when a constraint appears in niche trade press (Japanese, Korean, Chinese, Taiwanese) and when it hits mainstream English-language financial media.
+This system reads niche trade press in 10 languages — Japanese semiconductor journals, Korean PCB industry newsletters, Taiwanese substrate reports, Brazilian mining bulletins — and extracts structured "constraint events" using an LLM. It clusters them into themes, scores how tight each bottleneck is getting, and tells you which companies are on each side: suppliers who benefit, and buyers who get squeezed.
 
-## Architecture
+The edge is language and speed. A glass fiber shortage shows up in Japanese trade press weeks before it hits English-language analyst notes. By the time CNBC runs the story, the move is done.
+
+## What it found (first run, 698 articles, 10 languages)
+
+**Nittobo (3110.TSE)** — T-Glass / glass fiber cloth is a chokepoint for advanced substrates used in AI packaging. Nittobo is the dominant supplier. Japanese, Korean, and Taiwanese sources all independently flagged tightening. This company barely appears in English financial media.
+
+**AXT Inc (AXTI)** — Indium Phosphide wafer monopoly. InP wafers are the substrate for optical transceivers that connect GPU clusters. Micro-cap, pure-play on the interconnect bottleneck. Found via cross-referencing Asian semiconductor supply chain coverage.
+
+**Neotis** — Micro drill bits for PCB manufacturing. Samsung Electro-Mechanics and LG Innotek depend on them. Surfaced exclusively from Korean-language sources. No English coverage exists.
+
+**Grid interconnection queues** — Datacenter builds aren't bottlenecked by land or capital. They're stuck in multi-year power grid connection queues (PJM, Southern Company). Found across US utility filings and regional energy press.
+
+**Copper for advanced packaging** — HBM and CoWoS packaging are copper-intensive. LATAM sources surfaced mining constraints in Argentina and Chile that connect directly to packaging capacity timelines.
+
+248 structured constraint events. 43 emerging themes. Suppliers, buyers, tightening scores, and a thesis for each.
+
+## How it works
 
 ```
-Sources (46 active)          Pipeline (Postgres queue)         Output
-─────────────────           ─────────────────────────        ─────────
-RSS feeds (15)      →                                    → Themes + scores
-HTML scrapers (8)   →   COLLECTED → NORMALIZED → LINKED  → Entity tracking
-PDF monitors (4)    →              → EXTRACTED → DONE    → Alerts (Telegram)
-JS renderers (1)    →                                    → API + Dashboard
-Serper web search (10) →    ↑ asyncio.gather (5 concurrent LLM calls)
+Sources (46 active)            Pipeline (Postgres queue)           Output
+─────────────────             ─────────────────────────          ─────────
+RSS feeds (15)        →                                      → Scored themes
+HTML scrapers (8)     →   COLLECTED → NORMALIZED → LINKED    → Entity tracking
+PDF monitors (4)      →              → EXTRACTED → DONE      → Telegram alerts
+JS renderers (1)      →                                      → API + Dashboard
+Serper web search (10)→       ↑ asyncio.gather (5 concurrent MiniMax M2.5 calls)
 ```
 
-- **Postgres 16** — data store AND work queue (`SELECT FOR UPDATE SKIP LOCKED`). No Redis needed.
-- **MiniMax M2.5** via OpenRouter — single LLM handles translation, extraction, and thesis generation.
-- **10 languages** — EN, JA, KO, ZH, ZH-TW, ES, PT, DE, HI + SE Asian English
-- **Docker Compose** with `restart: always` — runs unattended 24/7.
+**Collect** — RSS, HTML scraping (trafilatura), JS rendering (Playwright), PDF monitoring, and Serper.dev web search across 10 languages. Each source runs on its own schedule (1-4 hours). Web search rotates keyword queries in EN, JA, KO, ZH, ZH-TW, ES, PT, DE, HI, and SE Asian English.
 
-## Quick Start
+**Extract** — MiniMax M2.5 (via OpenRouter) reads each article and outputs structured `ConstraintEvent` objects: event type, constraint layer, direction (tightening/easing), affected entities with roles, magnitude (price %, capex $, lead time weeks), and timing. A reference list of key suppliers per material ensures the LLM tags relevant companies even when not named in the article.
+
+**Cluster & Score** — Events group by (constraint_layer + shared objects). Each theme gets a tightening score: `0.35*velocity + 0.20*breadth + 0.20*quality + 0.15*allocation + 0.10*novelty`. Themes progress CANDIDATE → EMERGING → CONFIRMED → CONSENSUS. The signal is strongest at CANDIDATE/EMERGING.
+
+**Discover** — Entities not in the seed registry get logged as DISCOVERED and promote to CONFIRMED after enough mentions. This is how Neotis and other niche suppliers get found without being pre-programmed.
+
+## Running it
 
 ```bash
-# 1. Clone and configure
 cp .env.example .env
-# Edit .env: add OPENROUTER_API_KEY and SERPER_API_KEY
+# Add OPENROUTER_API_KEY and SERPER_API_KEY
 
-# 2. Start everything
 docker compose up -d
+docker compose exec pipeline python scripts/seed_db.py   # first time only
 
-# 3. Seed the database (first time only)
-docker compose exec pipeline python scripts/seed_db.py
-
-# The pipeline will automatically:
-#   - Collect from all sources every 1-4 hours
-#   - Translate non-English articles
-#   - Link entities (companies, products)
-#   - Extract structured constraint events via LLM
-#   - Cluster into themes and compute tightening scores
-#   - Loop every 15 seconds for new items
-```
-
-### Monitor
-
-```bash
-# Live logs
+# Watch it work
 docker compose logs pipeline -f
-
-# Check DB state
-docker compose exec pipeline python -c "
-import asyncio
-from src import db
-async def check():
-    rows = await db.fetch('SELECT pipeline_status, COUNT(*) FROM items GROUP BY pipeline_status')
-    for r in rows: print(f'{r[0]:15s} {r[1]}')
-    events = await db.fetchval('SELECT COUNT(*) FROM events')
-    themes = await db.fetchval('SELECT COUNT(*) FROM themes')
-    print(f'Events: {events}, Themes: {themes}')
-    await db.close_pool()
-asyncio.run(check())
-"
 ```
 
-## How It Works
+Three services: Postgres 16 (data store + work queue via `SELECT FOR UPDATE SKIP LOCKED`), pipeline (`restart: always`), and API (FastAPI). No Redis, no Celery. Runs on a single Hetzner CX32 (~$15/month). LLM costs ~$2-5/day. Search costs ~$6/month.
 
-**Collection** — The scheduler triggers collection jobs per source (configurable intervals). Web search rotates keyword queries in 10 languages. RSS and scrapers pull from known publications. New items enter the DB as `COLLECTED`.
-
-**Extraction** — The LLM reads each article and extracts structured `ConstraintEvent` objects: event type (LEAD_TIME_EXTENDED, ALLOCATION, PRICE_INCREASE, CAPEX_ANNOUNCED, etc.), constraint layer, direction (TIGHTENING/EASING/MIXED), affected entities with roles, magnitude (price %, capex USD, lead time weeks), and timing.
-
-**Themes & Scoring** — Events are clustered by (constraint_layer + shared objects). Each theme gets a tightening score (`0.35*velocity + 0.20*breadth + 0.20*quality + 0.15*allocation + 0.10*novelty`). Themes progress: CANDIDATE → EMERGING → CONFIRMED → CONSENSUS. Most valuable at CANDIDATE/EMERGING — before the market prices it in.
-
-**Entity Discovery** — When the LLM extracts an entity not in the registry, it's logged as DISCOVERED and promoted after enough mentions. This is how niche suppliers get surfaced automatically.
-
-### What kind of results does it produce?
-
-The system finds constraint themes across supply chain layers — materials shortages, capacity bottlenecks, lead time extensions, single-source dependencies — and tracks which companies sit on each side. It surfaces niche suppliers invisible to English-only research (e.g. monopoly substrate makers found via Japanese/Korean sources), detects tightening trends before they hit mainstream media, and scores how severe each bottleneck is becoming over time.
-
-## Project Structure
+## Project structure
 
 ```
-config/
-  seed_sources.yml      # Bootstrap sources (RSS, scrape, search)
-  seed_entities.yml     # Seed entities with cross-language aliases
-  llm.yml               # LLM provider config (OpenRouter)
-migrations/
-  001_initial_schema.sql  # sources, items, entities, events
-  002_themes_alerts.sql   # themes, alerts, pipeline_runs
-scripts/
-  run_pipeline.py       # Main entry point (scheduler + pipeline loop)
-  seed_db.py            # Load YAML configs into Postgres
-  backfill.py           # Re-process items when prompts change
-src/
-  collector/            # RSS, HTML scrape, JS render, PDF, web search
-  normalizer/           # Language detection (lingua-py) + LLM translation
-  linker/               # Entity matching (alias index) + discovery
-  extractor/            # LLM structured extraction → ConstraintEvent
-  themes/               # Clustering, tightening scoring, thesis generation
-  alerts/               # Telegram alerts + daily digest
-  api/                  # FastAPI dashboard (heatmap, themes, events)
-  db.py                 # asyncpg pool + migration runner
-  llm.py                # OpenRouter client with retries + semaphore
-  models.py             # Pydantic models (ConstraintEvent, Theme, etc.)
-  settings.py           # pydantic-settings, loads .env + YAML
+config/           seed_sources.yml, seed_entities.yml, llm.yml
+migrations/       numbered SQL (001_initial_schema, 002_themes_alerts)
+scripts/          run_pipeline.py, seed_db.py, backfill.py
+src/collector/    RSS, scraper, JS renderer, PDF monitor, Serper web search
+src/normalizer/   lingua-py language detection + LLM translation
+src/linker/       entity matching (alias index) + discovery lifecycle
+src/extractor/    LLM → structured ConstraintEvent extraction
+src/themes/       clustering, tightening scoring, thesis generation
+src/alerts/       Telegram alerts + daily digest
+src/api/          FastAPI dashboard
 ```
 
-## Planned Radars
+## Next radars
 
-The architecture — multi-language collection, LLM extraction, entity tracking, theme clustering — is general-purpose. Each radar gets its own spec file (in `radars/`), seed sources, seed entities, and extraction prompts. The pipeline and infrastructure are shared.
+The pipeline is radar-agnostic. Adding a new radar = new spec file + seed sources + seed entities. The collection, extraction, and scoring machinery is shared.
 
-**Radar 1 — AI Eats the World: Constraint Hunter** (live)
-Detects the next AI supply chain bottleneck early. Tracks compute, memory, packaging, interconnect, power, cooling, and materials. Sources: supplier earnings, niche packaging/PCB publications, Asian supply chain media. Focus is AI supply chain *stress*, not AI news.
+**Grid + Power Buildout** — AI and reindustrialization are power-limited. Transformer backlogs, switchgear lead times, interconnect approval queues, turbine order books. Sources: utility commission filings, equipment OEM earnings, regional permitting news.
 
-**Radar 2 — Grid + Power Buildout**
-AI + reindustrialization is power-limited; the grid is the hidden throttle. Signals: transformer backlog, switchgear lead times, interconnect approvals, turbine order books. Sources: utility commission filings, equipment OEM commentary, regional permitting news.
+**Industrial Materials & Specialty Chemicals** — Boring inputs become huge trades when one purity spec or one factory dominates. Yield issues, qualification delays, single-source dependencies. Sources: trade journals, supplier PR, plant expansion announcements.
 
-**Radar 3 — Industrial Materials & Specialty Chemicals**
-"Boring inputs" become huge trades when one spec dominates. Signals: purity constraints, yield issues, qualification delays, single-factory dependencies. Sources: trade journals, supplier PR, plant expansions, environmental/regulatory actions.
+**Precious Metals + Miners (Local-Language Edge)** — Early capex signals, permitting changes, jurisdiction shifts. The same multi-language advantage applies: Spanish/LatAm provincial bulletins surface mine financing and royalty changes before English-language mining press picks them up.
 
-**Radar 4 — Precious Metals + Miners (Local-Language Edge)**
-Detect early capex, permitting, billionaire flows, jurisdiction shifts. Signals: new mines financed, royalty/tax changes, political risk. Sources: Spanish/LatAm outlets, provincial bulletins, local regulators, company decks.
+## Tech stack
 
-**Radar 5 — Credit/Liquidity Stress & Forced Selling**
-Catch structure breaks — when financing or leverage forces repricing. Signals: fund gating, covenant stress, spreads, refinancing walls, margin changes. Sources: filings, credit commentary, finance press, earnings risk language.
-
-**Radar 6 — Geopolitics / Export Controls / Industrial Policy**
-Themes often begin as policy constraints. Signals: export bans, subsidies, procurement ramps, strategic stockpile changes. Sources: government releases, official registers, tender portals, sanctions lists.
-
-**Radar 7 — Shipping / Logistics / Chokepoints**
-Physical constraints leak into prices early via logistics. Signals: freight spikes, port disruptions, insurance rates, rerouting, canal issues. Sources: shipping industry sources, port authority updates, marine insurance.
-
-**Radar 8 — Country-Specific Capital Rotation**
-Some themes express through countries (indexes + policy + champions). Signals: local capex, pension flows, currency policy, national subsidy stacks. Sources: local-language business press, gov policy, conglomerate disclosures.
-
-## Cost
-
-- **LLM** (MiniMax M2.5 via OpenRouter): ~$2-5/day depending on article volume
-- **Web search** (Serper.dev / Google Search API): ~$6/month for 10-language coverage
-- **Infrastructure**: Single VPS (Hetzner CX32, ~$15/month) runs everything
-
-## Tech Stack
-
-Python 3.12, asyncpg, httpx, FastAPI, APScheduler, feedparser, trafilatura, lingua-py, Playwright, PyMuPDF, Pydantic v2, PostgreSQL 16, Docker Compose
+Python 3.12 / asyncpg / httpx / FastAPI / APScheduler / feedparser / trafilatura / lingua-py / Playwright / PyMuPDF / Pydantic v2 / PostgreSQL 16 / MiniMax M2.5 (OpenRouter) / Serper.dev / Docker Compose
