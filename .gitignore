@@ -27,5 +27,8 @@ pgdata/
 .DS_Store
 Thumbs.db
 
+# Private plans
+plans.md
+
 # Claude
 .claude/
