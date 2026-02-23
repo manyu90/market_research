@@ -13,11 +13,11 @@ RSS feeds (15)      →                                    → Themes + scores
 HTML scrapers (8)   →   COLLECTED → NORMALIZED → LINKED  → Entity tracking
 PDF monitors (4)    →              → EXTRACTED → DONE    → Alerts (Telegram)
 JS renderers (1)    →                                    → API + Dashboard
-Web search (10)     →       ↑ asyncio.gather (5 concurrent LLM calls)
+Serper web search (10) →    ↑ asyncio.gather (5 concurrent LLM calls)
 ```
 
 - **Postgres 16** — data store AND work queue (`SELECT FOR UPDATE SKIP LOCKED`). No Redis needed.
-- **Single LLM** via OpenRouter — handles translation, extraction, and thesis generation.
+- **MiniMax M2.5** via OpenRouter — single LLM handles translation, extraction, and thesis generation.
 - **10 languages** — EN, JA, KO, ZH, ZH-TW, ES, PT, DE, HI + SE Asian English
 - **Docker Compose** with `restart: always` — runs unattended 24/7.
 
@@ -136,8 +136,8 @@ Some themes express through countries (indexes + policy + champions). Signals: l
 
 ## Cost
 
-- **LLM** (OpenRouter): ~$2-5/day depending on article volume
-- **Web search** (Serper.dev): ~$6/month for 10-language coverage
+- **LLM** (MiniMax M2.5 via OpenRouter): ~$2-5/day depending on article volume
+- **Web search** (Serper.dev / Google Search API): ~$6/month for 10-language coverage
 - **Infrastructure**: Single VPS (Hetzner CX32, ~$15/month) runs everything
 
 ## Tech Stack
