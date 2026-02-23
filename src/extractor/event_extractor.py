@@ -7,6 +7,7 @@ import uuid
 from src import db
 from src.llm import llm_extract
 from src.models import ConstraintEvent, ExtractionResult
+from src.linker.entity_discovery import discover_entity
 
 logger = logging.getLogger(__name__)
 
@@ -169,6 +170,24 @@ async def extract_and_store(item_id: str) -> int:
             event.confidence,
         )
         count += 1
+
+    # Discover new entities from extracted events
+    for event in result.events:
+        for ent in event.entities:
+            eid = ent.entity_id
+            # Derive a readable name from the entity_id (E:company:bloom_energy -> Bloom Energy)
+            parts = eid.split(":")
+            name_part = parts[-1] if parts else eid
+            readable_name = name_part.replace("_", " ").title()
+            entity_type = parts[1] if len(parts) >= 2 else "company"
+            await discover_entity(
+                name=readable_name,
+                entity_type=entity_type,
+                item_id=str(row["id"]),
+                layer_hint=event.constraint_layer.value,
+                role_hint=ent.role,
+                entity_id_override=eid,
+            )
 
     await db.execute(
         "UPDATE items SET pipeline_status = 'DONE', updated_at = now() WHERE id = $1",

@@ -9,6 +9,36 @@ from src.linker.entity_linker import load_alias_index
 
 logger = logging.getLogger(__name__)
 
+# Map LLM entity type prefixes to valid DB types
+_TYPE_MAP = {
+    "company": "COMPANY",
+    "facility": "FACILITY",
+    "product": "PRODUCT",
+    "component": "COMPONENT",
+    "material": "MATERIAL",
+    "process_tech": "PROCESS_TECH",
+    "buyer_class": "BUYER_CLASS",
+    "geo": "GEO",
+    "location": "GEO",
+    "policy_program": "POLICY_PROGRAM",
+    "index": "INDEX",
+    # Catch-alls for LLM-generated types
+    "agency": "POLICY_PROGRAM",
+    "regulator": "POLICY_PROGRAM",
+    "org": "COMPANY",
+    "person": "COMPANY",
+    "entity": "COMPANY",
+    "industry": "BUYER_CLASS",
+    "generic": "BUYER_CLASS",
+    "unknown": "COMPANY",
+    "utility": "COMPANY",
+}
+
+
+def _normalize_type(raw_type: str) -> str:
+    """Map a raw entity type to a valid DB type."""
+    return _TYPE_MAP.get(raw_type.lower(), "COMPANY")
+
 
 def _slugify(name: str) -> str:
     """Create a slug from entity name for entity_id."""
@@ -22,29 +52,43 @@ async def discover_entity(
     item_id: str,
     layer_hint: str | None = None,
     role_hint: str | None = None,
+    entity_id_override: str | None = None,
 ) -> str | None:
-    """Create a DISCOVERED entity if not already known. Returns entity_id or None."""
-    # Check if entity already exists (by name match)
+    """Create a DISCOVERED entity if not already known. Returns entity_id or None.
+
+    If entity_id_override is provided, use that exact ID (e.g. from LLM extraction).
+    Otherwise generate one from the name.
+    """
+    import uuid as _uuid
+
+    entity_id = entity_id_override or f"E:{entity_type.lower()}:{_slugify(name)}"
+    db_type = _normalize_type(entity_type)
+
+    # Check if this entity_id already exists
+    exists = await db.fetchval(
+        "SELECT 1 FROM entities WHERE entity_id = $1", entity_id
+    )
+    if exists:
+        # Bump mention count
+        await db.execute(
+            "UPDATE entities SET mention_count = mention_count + 1, updated_at = now() WHERE entity_id = $1",
+            entity_id,
+        )
+        return entity_id
+
+    # Also check by name match (might exist under a different ID)
     existing = await db.fetchval(
         "SELECT entity_id FROM entities WHERE canonical_name ILIKE $1",
         name,
     )
     if existing:
+        await db.execute(
+            "UPDATE entities SET mention_count = mention_count + 1, updated_at = now() WHERE entity_id = $1",
+            existing,
+        )
         return existing
 
-    slug = _slugify(name)
-    entity_id = f"E:{entity_type.lower()}:{slug}"
-
-    # Check if this exact entity_id exists
-    exists = await db.fetchval(
-        "SELECT 1 FROM entities WHERE entity_id = $1", entity_id
-    )
-    if exists:
-        return entity_id
-
     # Create new DISCOVERED entity
-    import uuid as _uuid
-
     await db.execute(
         """INSERT INTO entities (entity_id, canonical_name, type, aliases, roles, layers,
                                  status, mention_count, discovered_from_item)
@@ -52,16 +96,13 @@ async def discover_entity(
            ON CONFLICT (entity_id) DO UPDATE SET mention_count = entities.mention_count + 1""",
         entity_id,
         name,
-        entity_type,
+        db_type,
         json.dumps({"en": [name]}),
         [role_hint] if role_hint else [],
         [layer_hint] if layer_hint else [],
         _uuid.UUID(item_id) if isinstance(item_id, str) else item_id,
     )
-    logger.info("Discovered new entity: %s (%s) in layer %s", name, entity_type, layer_hint)
-
-    # Reload alias index to include new entity
-    await load_alias_index()
+    logger.info("DISCOVERED new entity: %s [%s] layer=%s role=%s", name, entity_id, layer_hint, role_hint)
     return entity_id
 
 
