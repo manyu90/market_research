@@ -19,6 +19,7 @@ from src.linker.entity_discovery import promote_entities
 from src.themes.clusterer import run_theme_cycle
 from src.alerts.triage import run_alert_triage
 from src.alerts.digest import build_daily_digest
+from src.collector.query_generator import init as init_query_generator
 from src.settings import PROJECT_ROOT
 
 # ---------------------------------------------------------------------------
@@ -293,6 +294,10 @@ async def main():
     # Load entity alias index
     logger.info("Loading entity alias index...")
     await load_alias_index()
+
+    # Initialize taxonomy-driven query generator
+    logger.info("Initializing query generator...")
+    init_query_generator()
 
     # Print DB stats
     src_count = await db.fetchval("SELECT COUNT(*) FROM sources WHERE status = 'CONFIRMED'")

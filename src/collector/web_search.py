@@ -8,6 +8,7 @@ import trafilatura
 
 from src import db
 from src.collector.dedup import url_hash, content_hash
+from src.collector.query_generator import get_next_queries
 from src.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -16,14 +17,18 @@ logger = logging.getLogger(__name__)
 async def fetch_web_search_source(source: dict) -> int:
     """Run Serper.dev (Google Search API) sweeps for constraint keywords. Returns new item count."""
     source_id = source["source_id"]
-    queries = source.get("search_queries", [])
-    if not queries or not settings.serper_api_key:
-        if not settings.serper_api_key:
-            logger.debug("No SERPER_API_KEY set, skipping web search for %s", source_id)
+    if not settings.serper_api_key:
+        logger.debug("No SERPER_API_KEY set, skipping web search for %s", source_id)
         return 0
 
-    # Pick 2-3 random queries per sweep to stay within rate limits
-    selected = random.sample(queries, min(3, len(queries)))
+    # Use taxonomy-driven queries with round-robin rotation; fall back to hardcoded
+    selected = get_next_queries(source_id, count=3)
+    if not selected:
+        fallback = source.get("search_queries", [])
+        if not fallback:
+            return 0
+        selected = random.sample(fallback, min(3, len(fallback)))
+    logger.debug("Web search %s queries: %s", source_id, selected)
     new_count = 0
 
     for query in selected:

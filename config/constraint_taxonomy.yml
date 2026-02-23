@@ -1,0 +1,441 @@
+# AI Supply Chain Search Queries
+# -------------------------------------------------------------------
+# Simple flat list of search queries per language, ordered broad → specific.
+# The query generator round-robins through these. The LLM downstream
+# decides what's actually a constraint signal — we just cast a wide net.
+# -------------------------------------------------------------------
+
+queries:
+  en:
+    # === BROAD (run most often — catch big stories) ===
+    - AI chip shortage
+    - semiconductor supply chain bottleneck
+    - GPU allocation shortage
+    - AI infrastructure supply constraint
+    - datacenter construction delay
+    - AI server supply shortage
+    - semiconductor capacity expansion
+    - chip shortage 2025 2026
+    - AI supply chain risk
+
+    # === GPU / ACCELERATOR ===
+    - Nvidia GPU supply allocation
+    - Nvidia Blackwell B200 GB200 supply
+    - AMD MI300 MI325 supply
+    - Intel Gaudi supply
+    - Google TPU supply
+    - AI accelerator lead time
+    - custom AI chip ASIC supply
+
+    # === FOUNDRY / WAFER ===
+    - TSMC capacity allocation wait time
+    - Samsung foundry capacity
+    - Intel foundry capacity
+    - advanced node 3nm 2nm capacity
+    - wafer shortage supply
+    - ASML EUV delivery lead time
+
+    # === MEMORY ===
+    - HBM supply shortage allocation
+    - HBM3E HBM4 capacity
+    - SK hynix Samsung HBM supply
+    - DRAM DDR5 server supply
+    - NAND flash enterprise SSD supply
+
+    # === PACKAGING ===
+    - CoWoS advanced packaging capacity
+    - TSMC CoWoS supply shortage
+    - IC substrate ABF shortage
+    - advanced packaging bottleneck
+    - OSAT packaging capacity
+
+    # === NETWORKING / OPTICS ===
+    - optical transceiver 800G 1.6T shortage
+    - datacenter switch supply
+    - silicon photonics supply
+    - fiber optic cable shortage
+    - co-packaged optics supply
+
+    # === POWER / ELECTRICAL ===
+    - datacenter power supply shortage
+    - power transformer lead time shortage
+    - electrical steel supply transformer
+    - switchgear circuit breaker lead time
+    - UPS PDU datacenter supply
+    - datacenter power capacity constraint
+
+    # === COOLING ===
+    - datacenter liquid cooling supply
+    - immersion cooling datacenter supply
+    - datacenter chiller CDU shortage
+    - cooling infrastructure datacenter bottleneck
+
+    # === DATACENTER BUILD ===
+    - datacenter permitting delay
+    - grid interconnection queue datacenter
+    - datacenter construction labor shortage
+    - datacenter site power availability
+    - datacenter land acquisition
+    - substation construction datacenter
+
+    # === ENERGY / ON-SITE POWER ===
+    - fuel cell datacenter power Bloom
+    - nuclear SMR datacenter power
+    - gas turbine on-site datacenter
+    - datacenter energy shortage
+    - behind the meter power datacenter
+    - renewable energy PPA datacenter
+
+    # === MATERIALS / MINERALS ===
+    - gallium germanium export restriction semiconductor
+    - SiC substrate silicon carbide supply
+    - copper supply PCB semiconductor
+    - neon gas semiconductor supply
+    - rare earth supply chain
+
+    # === PCB / SUBSTRATE MATERIALS ===
+    - PCB materials supply shortage
+    - glass cloth glass fiber semiconductor supply
+    - copper foil copper clad laminate shortage
+
+    # === REGULATION / WATER ===
+    - datacenter energy regulation
+    - datacenter water usage restriction
+    - AI energy consumption regulation
+
+    # === KEY COMPANIES ===
+    - TSMC earnings capacity guidance
+    - Nvidia earnings supply guidance
+    - SK hynix earnings HBM
+    - Samsung semiconductor earnings
+    - Broadcom supply chain
+    - Bloom Energy datacenter
+
+  ja:
+    # === 広範 ===
+    - AI半導体 供給不足
+    - 半導体 サプライチェーン ボトルネック
+    - GPU 供給 不足
+    - データセンター 建設 遅延
+    - AI サーバー 供給
+    - 半導体 増産 設備投資
+
+    # === GPU / アクセラレータ ===
+    - Nvidia GPU 供給 割り当て
+    - Blackwell B200 供給
+    - AMD MI300 供給
+
+    # === ファウンドリ ===
+    - TSMC 生産能力 割り当て
+    - 先端プロセス 3nm 2nm 生産能力
+    - ASML EUV 納期
+    - ウェーハ 供給不足
+
+    # === メモリ ===
+    - HBM 供給不足 割り当て
+    - HBM3E HBM4 生産能力
+    - DRAM DDR5 サーバー 供給
+    - NAND フラッシュ SSD 供給
+
+    # === パッケージング ===
+    - CoWoS 先端パッケージング 能力不足
+    - IC基板 ABF 供給不足
+    - OSAT 後工程 生産能力
+
+    # === ネットワーク ===
+    - 光トランシーバー 800G 供給
+    - データセンター スイッチ 供給
+    - 光ファイバー 供給
+
+    # === 電力 ===
+    - データセンター 電力 不足
+    - 変圧器 納期 不足
+    - 電磁鋼板 供給
+    - データセンター 電力供給 制約
+
+    # === 冷却 ===
+    - データセンター 液冷 供給
+    - 浸漬冷却 データセンター
+
+    # === データセンター建設 ===
+    - データセンター 許認可 遅延
+    - 系統接続 待ち データセンター
+    - データセンター 建設 人手不足
+    - 変電所 建設 データセンター
+
+    # === エネルギー ===
+    - 燃料電池 データセンター
+    - SMR 小型原子炉 データセンター
+    - データセンター エネルギー 規制
+
+    # === 素材 ===
+    - ガラスクロス 基板材料 供給不足
+    - 銅箔 CCL 供給 半導体
+    - ガリウム ゲルマニウム 輸出規制
+    - SiC基板 供給
+
+    # === 主要企業 ===
+    - TSMC 決算 生産能力
+    - Nvidia 決算 供給
+    - SKハイニックス 決算 HBM
+    - サムスン 半導体 決算
+
+  ko:
+    # === 광범위 ===
+    - AI 반도체 공급 부족
+    - 반도체 공급망 병목
+    - GPU 공급 부족
+    - 데이터센터 건설 지연
+    - AI 서버 공급
+    - 반도체 증산 설비투자
+
+    # === GPU ===
+    - 엔비디아 GPU 공급 할당
+    - 블랙웰 B200 공급
+    - AMD MI300 공급
+
+    # === 파운드리 ===
+    - TSMC 생산능력 할당
+    - 첨단공정 3nm 2nm 생산능력
+    - ASML EUV 납기
+    - 웨이퍼 공급부족
+
+    # === 메모리 ===
+    - HBM 공급부족 할당
+    - HBM3E HBM4 생산능력
+    - DRAM DDR5 서버 공급
+    - 낸드플래시 SSD 공급
+
+    # === 패키징 ===
+    - CoWoS 첨단패키징 생산능력
+    - IC기판 ABF 공급부족
+    - OSAT 후공정 생산능력
+
+    # === 네트워크 ===
+    - 광트랜시버 800G 공급
+    - 데이터센터 스위치 공급
+    - 광케이블 공급
+
+    # === 전력 ===
+    - 데이터센터 전력 부족
+    - 전력 변압기 납기 부족
+    - 전기강판 공급
+    - 데이터센터 전력공급 제약
+
+    # === 냉각 ===
+    - 데이터센터 액체냉각 공급
+    - 침지냉각 데이터센터
+
+    # === 데이터센터 건설 ===
+    - 데이터센터 인허가 지연
+    - 계통연계 대기 데이터센터
+    - 데이터센터 건설 인력부족
+
+    # === 에너지 ===
+    - 연료전지 데이터센터
+    - SMR 소형원자로 데이터센터
+    - 데이터센터 에너지 규제
+
+    # === 소재 ===
+    - 유리섬유 기판재료 공급부족
+    - 동박 CCL 공급 반도체
+    - 갈륨 게르마늄 수출규제
+    - SiC 기판 공급
+
+    # === 주요기업 ===
+    - TSMC 실적 생산능력
+    - 엔비디아 실적 공급
+    - SK하이닉스 실적 HBM
+    - 삼성 반도체 실적
+
+  zh:
+    # === 广泛 ===
+    - AI芯片 短缺 供应
+    - 半导体 供应链 瓶颈
+    - GPU 供应不足 分配
+    - 数据中心 建设 延期
+    - AI服务器 供应
+    - 半导体 扩产 资本支出
+
+    # === GPU ===
+    - 英伟达 GPU 供应 分配
+    - Blackwell B200 供应
+    - AMD MI300 供应
+
+    # === 晶圆代工 ===
+    - 台积电 产能 分配
+    - 先进制程 3nm 2nm 产能
+    - ASML EUV 交付
+    - 硅片 供应不足
+
+    # === 存储 ===
+    - HBM 供应不足 分配
+    - HBM3E HBM4 产能
+    - DRAM DDR5 服务器 供应
+    - NAND闪存 企业SSD 供应
+
+    # === 封装 ===
+    - CoWoS 先进封装 产能不足
+    - IC载板 ABF 短缺
+    - OSAT 封测产能
+
+    # === 网络 ===
+    - 光模块 800G 供应
+    - 数据中心 交换机 供应
+    - 光纤 供应
+
+    # === 电力 ===
+    - 数据中心 电力 不足
+    - 电力变压器 交期 短缺
+    - 取向硅钢 供应
+    - 数据中心 供电 制约
+
+    # === 冷却 ===
+    - 数据中心 液冷 供应
+    - 浸没式冷却 数据中心
+
+    # === 数据中心建设 ===
+    - 数据中心 审批 延迟
+    - 电网接入 排队 数据中心
+    - 数据中心 建设 劳动力短缺
+
+    # === 能源 ===
+    - 燃料电池 数据中心
+    - SMR 小型堆 数据中心
+    - 数据中心 能源 监管
+
+    # === 材料 ===
+    - 玻璃布 基板材料 供应不足
+    - 铜箔 覆铜板 供应 半导体
+    - 镓 锗 出口管制
+    - 碳化硅衬底 供应
+
+    # === 重点企业 ===
+    - 台积电 财报 产能
+    - 英伟达 财报 供应
+    - SK海力士 财报 HBM
+    - 三星 半导体 财报
+
+  zh-tw:
+    # === 廣泛 ===
+    - AI晶片 短缺 供應
+    - 半導體 供應鏈 瓶頸
+    - GPU 供應不足
+    - 資料中心 建設 延期
+    - AI伺服器 供應
+    - 半導體 擴產
+
+    # === GPU ===
+    - 輝達 GPU 供應
+    - Blackwell B200 供應
+
+    # === 晶圓代工 ===
+    - 台積電 產能 分配
+    - 先進製程 3nm 2nm 產能
+    - ASML EUV 交付
+    - 矽晶圓 供應不足
+
+    # === 記憶體 ===
+    - HBM 供應不足
+    - HBM3E HBM4 產能
+    - DRAM DDR5 伺服器
+    - NAND SSD 供應
+
+    # === 封裝 ===
+    - CoWoS 先進封裝 產能
+    - IC載板 ABF 短缺
+    - OSAT 封測產能
+
+    # === 網路 ===
+    - 光模組 800G 供應
+    - 資料中心 交換機 供應
+
+    # === 電力 ===
+    - 資料中心 電力 不足
+    - 變壓器 交期 短缺
+    - 資料中心 供電 制約
+
+    # === 冷卻 ===
+    - 資料中心 液冷 供應
+
+    # === 資料中心建設 ===
+    - 資料中心 審批 延遲
+    - 電網接入 資料中心
+
+    # === 能源 ===
+    - 燃料電池 資料中心
+    - SMR 資料中心
+    - 資料中心 能源 法規
+
+    # === 材料 ===
+    - 玻璃纖維布 基板材料 供應不足
+    - 鎵 鍺 出口管制
+    - 碳化矽 供應
+
+    # === 企業 ===
+    - 台積電 法說會 產能
+    - 輝達 財報 供應
+    - SK海力士 HBM
+
+  es:
+    - escasez chips IA semiconductores
+    - cadena suministro semiconductores cuello de botella
+    - GPU suministro escasez
+    - centro datos construccion retraso
+    - servidor IA suministro
+    - TSMC capacidad produccion
+    - HBM suministro escasez
+    - CoWoS empaquetado avanzado
+    - centro datos energia escasez
+    - transformador plazo entrega
+    - refrigeracion liquida centro datos
+    - Nvidia suministro GPU
+    - fibra optica suministro
+    - centro datos regulacion energia
+
+  pt:
+    - escassez chips IA semicondutores
+    - cadeia suprimentos semicondutores gargalo
+    - GPU fornecimento escassez
+    - data center construcao atraso
+    - servidor IA fornecimento
+    - TSMC capacidade producao
+    - HBM fornecimento escassez
+    - CoWoS empacotamento avancado
+    - data center energia escassez
+    - transformador prazo entrega
+    - refrigeracao liquida data center
+    - Nvidia fornecimento GPU
+    - fibra otica fornecimento
+    - data center regulacao energia
+
+  de:
+    - KI Chip Engpass Halbleiter
+    - Halbleiter Lieferkette Engpass
+    - GPU Lieferzeit Knappheit
+    - Rechenzentrum Bau Verzögerung
+    - KI Server Lieferzeit
+    - TSMC Kapazität Produktion
+    - HBM Lieferengpass
+    - CoWoS Packaging Kapazität
+    - Rechenzentrum Strom Engpass
+    - Transformator Lieferzeit
+    - Flüssigkühlung Rechenzentrum
+    - Nvidia GPU Lieferzeit
+    - Glasfaser Lieferengpass
+    - Rechenzentrum Energieregulierung
+
+# -------------------------------------------------------------------
+# Source → language mapping
+# -------------------------------------------------------------------
+source_language_map:
+  "S:search:constraint_en":   ["en"]
+  "S:search:constraint_ja":   ["ja"]
+  "S:search:constraint_ko":   ["ko"]
+  "S:search:constraint_zh":   ["zh"]
+  "S:search:constraint_tw":   ["zh-tw"]
+  "S:search:constraint_in":   ["en"]
+  "S:search:constraint_es":   ["es"]
+  "S:search:constraint_pt":   ["pt"]
+  "S:search:constraint_de":   ["de"]
+  "S:search:constraint_sea":  ["en"]

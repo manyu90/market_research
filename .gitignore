@@ -20,6 +20,9 @@ logs/
 *.swp
 *.swo
 
+# Runtime data (query cursors etc.)
+data/
+
 # Docker volumes
 pgdata/
 
