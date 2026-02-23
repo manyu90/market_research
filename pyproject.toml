@@ -1,0 +1,49 @@
+[project]
+name = "ai-constraints-radar"
+version = "0.1.0"
+description = "24/7 AI supply chain bottleneck detection system"
+requires-python = ">=3.12"
+dependencies = [
+    # async HTTP + DB
+    "httpx>=0.27",
+    "asyncpg>=0.30",
+    # web framework
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    # settings
+    "pydantic>=2.10",
+    "pydantic-settings>=2.6",
+    "pyyaml>=6.0",
+    # collector
+    "feedparser>=6.0",
+    "trafilatura>=2.0",
+    "playwright>=1.49",
+    "pymupdf>=1.25",
+    # NLP / language
+    "lingua-language-detector>=2.1",
+    # scheduling
+    "apscheduler>=3.10,<4.0",
+    # telegram
+    "python-telegram-bot>=21",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

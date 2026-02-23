@@ -1,0 +1,698 @@
+# ============================================================================
+# AI Constraints Radar — SEED Source Registry
+# ============================================================================
+# This is a BOOTSTRAP file. These 28 sources are the starting points.
+# The system ALSO discovers new sources automatically via:
+#
+#   1. Web search sweeps — periodic broad searches for constraint keywords
+#      across the open web (Google News, Bing News, etc.) to find articles
+#      from publications not in this list
+#   2. Citation/link extraction — every ingested article's outbound links
+#      and cited sources are extracted. If a new domain appears repeatedly
+#      with relevant constraint content, it becomes a source candidate.
+#   3. Source promotion — new domains follow:
+#      DISCOVERED (first seen) → PROVISIONAL (3+ relevant articles) →
+#      CONFIRMED (6+ articles, scored for reliability/earliness)
+#   4. Operator can also manually add sources at any time via dashboard
+#
+# The seed sources below are loaded at init to give the collector
+# something to work with on day one. After that, the source registry
+# lives in Postgres and grows continuously.
+#
+# Fetch methods:
+#   rss          — standard RSS/Atom feed
+#   scrape_html  — HTTP GET + trafilatura/newspaper extraction
+#   scrape_js    — Playwright (JS-rendered pages)
+#   api          — structured API call
+#   pdf_monitor  — check page for new PDF links, download + extract
+#   web_search   — periodic keyword search via news API / search engine
+#
+# Tiers:
+#   1 = earliest/highest signal (supplier earnings, trade pubs, gov)
+#   2 = confirmation (reputable finance press, wires)
+#   3 = discovery only (social, blogs — never sole basis for alerts)
+# ============================================================================
+
+sources:
+
+  # ==========================================================================
+  # TIER 1 — Trade Publications (English)
+  # ==========================================================================
+
+  - source_id: "S:semiengineering"
+    name: "Semiconductor Engineering"
+    url: "https://semiengineering.com"
+    feed_url: "https://semiengineering.com/feed/"
+    fetch_method: rss
+    language: en
+    tier: 1
+    reliability: 0.85
+    earliness: 0.80
+    schedule_minutes: 30
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, SUBSTRATES_FILMS]
+    notes: "Open access, WordPress. Best English-language source for packaging/process tech."
+
+  - source_id: "S:thelec"
+    name: "The Elec"
+    url: "https://www.thelec.net"
+    feed_url: "https://www.thelec.net/rss/S1N3.xml"
+    fetch_method: rss
+    language: en
+    tier: 1
+    reliability: 0.82
+    earliness: 0.85
+    schedule_minutes: 30
+    layers: [MEMORY, ADV_PACKAGING, COMPUTE_SILICON]
+    notes: "Korean semiconductor supply chain coverage in English. Original reporting on Samsung/SK Hynix."
+
+  - source_id: "S:digitimes"
+    name: "DigiTimes"
+    url: "https://www.digitimes.com"
+    feed_url: "https://www.digitimes.com/rss/daily.xml"
+    fetch_method: rss
+    language: en
+    tier: 1
+    reliability: 0.80
+    earliness: 0.90
+    schedule_minutes: 30
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, SUBSTRATES_FILMS, PCB_MATERIALS, INTERCONNECT_NETWORKING]
+    notes: "Hard paywall — RSS gives headlines + short abstracts only. Headlines alone are often signal-rich. Taiwan supply chain intelligence."
+
+  - source_id: "S:servethehome"
+    name: "ServeTheHome"
+    url: "https://www.servethehome.com"
+    feed_url: "https://www.servethehome.com/feed/"
+    fetch_method: rss
+    language: en
+    tier: 1
+    reliability: 0.80
+    earliness: 0.70
+    schedule_minutes: 60
+    layers: [INTERCONNECT_NETWORKING, THERMAL_COOLING, COMPUTE_SILICON]
+    notes: "Open access. Server/AI hardware reviews + industry coverage. Good for networking and cooling."
+
+  - source_id: "S:datacenterdynamics"
+    name: "DatacenterDynamics"
+    url: "https://www.datacenterdynamics.com/en/"
+    feed_url: "https://www.datacenterdynamics.com/en/atom/"
+    fetch_method: rss
+    language: en
+    tier: 1
+    reliability: 0.78
+    earliness: 0.65
+    schedule_minutes: 60
+    layers: [DATACENTER_BUILD_PERMIT, POWER_DELIVERY_EQUIP, THERMAL_COOLING, FUEL_ONSITE_POWER]
+    notes: "Open access. Best for datacenter power, cooling, and construction constraints."
+
+  # ==========================================================================
+  # TIER 1 — Trade Publications (Asian languages — highest edge)
+  # ==========================================================================
+
+  - source_id: "S:eetimes_japan"
+    name: "EE Times Japan"
+    url: "https://eetimes.itmedia.co.jp"
+    feed_url: "https://eetimes.itmedia.co.jp/ee/rss/news.xml"
+    fetch_method: rss
+    language: ja
+    tier: 1
+    reliability: 0.82
+    earliness: 0.88
+    schedule_minutes: 60
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, PCB_MATERIALS, INTERCONNECT_NETWORKING]
+    notes: "Japanese only. Operated by ITmedia. Open, static articles. Strong for Japanese supply chain reporting."
+
+  - source_id: "S:etnews_kr"
+    name: "ETNews Korea (Korean edition)"
+    url: "https://www.etnews.com"
+    feed_url: "https://rss.etnews.com/"
+    fetch_method: rss
+    language: ko
+    tier: 1
+    reliability: 0.80
+    earliness: 0.88
+    schedule_minutes: 60
+    layers: [MEMORY, COMPUTE_SILICON, ADV_PACKAGING]
+    notes: "Korean language. Well-structured RSS. Covers Samsung, SK Hynix, Korean semiconductor ecosystem."
+
+  - source_id: "S:etnews_en"
+    name: "ETNews English"
+    url: "https://english.etnews.com"
+    fetch_method: scrape_html
+    scrape_target: "https://english.etnews.com/news/section.html?id1=03"
+    language: en
+    tier: 1
+    reliability: 0.78
+    earliness: 0.75
+    schedule_minutes: 120
+    layers: [MEMORY, COMPUTE_SILICON, ADV_PACKAGING]
+    notes: "English edition has lighter coverage than Korean. Check for new article links on section page."
+
+  - source_id: "S:jw_insights_en"
+    name: "JW Insights (English)"
+    url: "https://jw.ijiwei.com"
+    fetch_method: scrape_html
+    scrape_target: "https://jw.ijiwei.com/"
+    language: en
+    tier: 1
+    reliability: 0.75
+    earliness: 0.85
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, PCB_MATERIALS]
+    notes: "China's leading semiconductor media. English translations of selected Chinese articles. No RSS — scrape article listing."
+
+  - source_id: "S:jw_insights_zh"
+    name: "JW Insights / 爱集微 (Chinese)"
+    url: "https://ijiwei.com"
+    fetch_method: scrape_html
+    scrape_target: "https://ijiwei.com/"
+    language: zh
+    tier: 1
+    reliability: 0.78
+    earliness: 0.90
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, PCB_MATERIALS]
+    notes: "Chinese semiconductor media. Deeper coverage than English edition. Covers China IC policy, fab capacity, EDA."
+
+  # ==========================================================================
+  # TIER 1 — Company IR / Earnings / PR (supplier-side)
+  # ==========================================================================
+
+  - source_id: "S:ir:nittobo"
+    name: "Nittobo (Nitto Boseki) IR"
+    url: "https://www.nittobo.co.jp/eng/ir/"
+    fetch_method: pdf_monitor
+    language: ja  # PDFs often in Japanese with English summaries
+    tier: 1
+    reliability: 0.95
+    earliness: 0.95
+    schedule_minutes: 720  # check twice a day
+    layers: [PCB_MATERIALS]
+    notes: "TSE:3110. Glass fiber + specialty materials. Static HTML page with PDF links. Check for new earnings releases, investor presentations."
+
+  - source_id: "S:ir:ibiden"
+    name: "Ibiden IR"
+    url: "https://www.ibiden.com/ir/"
+    fetch_method: pdf_monitor
+    language: en
+    tier: 1
+    reliability: 0.95
+    earliness: 0.95
+    schedule_minutes: 720
+    layers: [SUBSTRATES_FILMS, ADV_PACKAGING]
+    notes: "TSE:4062. Critical ABF substrate and IC package substrate maker. Static HTML with PDF links."
+
+  - source_id: "S:ir:ajinomoto"
+    name: "Ajinomoto Group IR (parent of ABF maker)"
+    url: "https://www.ajinomoto.com/investors/"
+    fetch_method: pdf_monitor
+    language: en
+    tier: 1
+    reliability: 0.95
+    earliness: 0.90
+    schedule_minutes: 720
+    layers: [SUBSTRATES_FILMS]
+    notes: "TSE:2802. Parent of Ajinomoto Fine-Techno (monopoly on ABF insulation film). Quarterly earnings often mention electronic materials segment."
+
+  - source_id: "S:ir:shinko"
+    name: "Shinko Electric Industries IR"
+    url: "https://www.shinko.co.jp/english/ir/"
+    fetch_method: pdf_monitor
+    language: en
+    tier: 1
+    reliability: 0.90
+    earliness: 0.85
+    schedule_minutes: 1440  # once a day
+    layers: [ADV_PACKAGING, SUBSTRATES_FILMS]
+    notes: "DELISTED June 2025 — taken private by JIC+DNP+Mitsui Chemicals. IR page may still publish. Monitor for any continuing disclosures."
+
+  - source_id: "S:ir:tsmc"
+    name: "TSMC Investor Relations"
+    url: "https://investor.tsmc.com"
+    fetch_method: scrape_html
+    language: en
+    tier: 1
+    reliability: 0.98
+    earliness: 0.80
+    schedule_minutes: 720
+    layers: [COMPUTE_SILICON, ADV_PACKAGING]
+    notes: "TSE:2330 / NYSE:TSM. Monthly revenue reports, quarterly earnings. Check for press releases and earnings transcripts."
+
+  - source_id: "S:ir:sk_hynix"
+    name: "SK Hynix IR"
+    url: "https://www.skhynix.com/ir"
+    fetch_method: scrape_html
+    language: en
+    tier: 1
+    reliability: 0.95
+    earliness: 0.90
+    schedule_minutes: 720
+    layers: [MEMORY]
+    notes: "KRX:000660. Dominant HBM supplier. Quarterly earnings and IR materials."
+
+  - source_id: "S:ir:innolight"
+    name: "Zhongji Innolight / 中际旭创 (CNINFO filings)"
+    url: "http://www.cninfo.com.cn/"
+    fetch_method: scrape_js
+    language: zh
+    tier: 1
+    reliability: 0.95
+    earliness: 0.90
+    schedule_minutes: 1440
+    layers: [INTERCONNECT_NETWORKING]
+    notes: "SZSE:300308. World's largest optical transceiver maker. Filings on CNINFO (Chinese only). English corporate site at zj-innolight.com has limited content."
+
+  # ==========================================================================
+  # TIER 1 — Government / Regulatory
+  # ==========================================================================
+
+  - source_id: "S:gov:meti_japan"
+    name: "METI Japan (Ministry of Economy, Trade and Industry)"
+    url: "https://www.meti.go.jp/english/"
+    fetch_method: scrape_html
+    language: ja  # Japanese primary, English summaries
+    tier: 1
+    reliability: 0.95
+    earliness: 0.90
+    schedule_minutes: 720
+    layers: [COMPUTE_SILICON, PCB_MATERIALS, ADV_PACKAGING]
+    notes: "Japanese industrial policy, semiconductor subsidies, export controls. Check press releases."
+
+  - source_id: "S:gov:bis_export"
+    name: "US BIS Export Controls (Commerce Dept)"
+    url: "https://www.bis.gov/"
+    fetch_method: scrape_html
+    language: en
+    tier: 1
+    reliability: 0.98
+    earliness: 0.95
+    schedule_minutes: 720
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING]
+    notes: "Bureau of Industry and Security. Export control rules targeting semiconductor equipment and chips."
+
+  - source_id: "S:gov:ferc"
+    name: "FERC eLibrary"
+    url: "https://elibrary.ferc.gov/"
+    fetch_method: api
+    language: en
+    tier: 1
+    reliability: 0.98
+    earliness: 0.85
+    schedule_minutes: 1440
+    layers: [POWER_DELIVERY_EQUIP, DATACENTER_BUILD_PERMIT]
+    notes: "Federal Energy Regulatory Commission. Interconnection filings, grid infrastructure approvals."
+
+  # ==========================================================================
+  # TIER 2 — Reputable Finance / Wire Press (English)
+  # ==========================================================================
+
+  - source_id: "S:tomshardware"
+    name: "Tom's Hardware"
+    url: "https://www.tomshardware.com"
+    feed_url: "https://www.tomshardware.com/feeds/all"
+    fetch_method: rss
+    language: en
+    tier: 2
+    reliability: 0.70
+    earliness: 0.50
+    schedule_minutes: 60
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, PCB_MATERIALS, INTERCONNECT_NETWORKING]
+    notes: "General tech press. Arrives later than trade pubs but sometimes picks up stories that cross over. JS-rendered for full articles — may need playwright fallback."
+
+  - source_id: "S:theregister"
+    name: "The Register"
+    url: "https://www.theregister.com"
+    feed_url: "https://www.theregister.com/headlines.atom"
+    fetch_method: rss
+    language: en
+    tier: 2
+    reliability: 0.72
+    earliness: 0.50
+    schedule_minutes: 60
+    layers: [COMPUTE_SILICON, MEMORY, DATACENTER_BUILD_PERMIT]
+    notes: "UK-based tech press. Good for datacenter and semiconductor industry news."
+
+  - source_id: "S:eetimes_en"
+    name: "EE Times (English global)"
+    url: "https://www.eetimes.com"
+    fetch_method: scrape_html
+    language: en
+    tier: 2
+    reliability: 0.78
+    earliness: 0.60
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, INTERCONNECT_NETWORKING]
+    notes: "Global electronics engineering press."
+
+  - source_id: "S:utilitydive"
+    name: "Utility Dive"
+    url: "https://www.utilitydive.com"
+    fetch_method: scrape_html
+    language: en
+    tier: 2
+    reliability: 0.75
+    earliness: 0.65
+    schedule_minutes: 120
+    layers: [POWER_DELIVERY_EQUIP, DATACENTER_BUILD_PERMIT, FUEL_ONSITE_POWER]
+    notes: "US utility industry news. Grid modernization, transformer backlogs, utility capex."
+
+  - source_id: "S:nikkei_asia"
+    name: "Nikkei Asia"
+    url: "https://asia.nikkei.com"
+    fetch_method: scrape_html
+    language: en
+    tier: 2
+    reliability: 0.82
+    earliness: 0.65
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, PCB_MATERIALS]
+    notes: "English edition of Nikkei. Partial paywall. Good for Japan/Asia supply chain coverage."
+
+  - source_id: "S:reuters_tech"
+    name: "Reuters Technology"
+    url: "https://www.reuters.com/technology/"
+    fetch_method: scrape_html
+    language: en
+    tier: 2
+    reliability: 0.85
+    earliness: 0.40
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING]
+    notes: "Wire service. High reliability but low earliness — usually confirms what trade press reported days earlier."
+
+  # ==========================================================================
+  # TIER 2 — Structured Data APIs
+  # ==========================================================================
+
+  - source_id: "S:api:eia"
+    name: "EIA (US Energy Information Administration)"
+    url: "https://api.eia.gov/"
+    fetch_method: api
+    language: en
+    tier: 2
+    reliability: 0.95
+    earliness: 0.50
+    schedule_minutes: 1440
+    layers: [POWER_DELIVERY_EQUIP, FUEL_ONSITE_POWER]
+    notes: "Monthly electricity generation, capacity, natural gas data. Free API with key."
+
+  # ==========================================================================
+  # TIER 3 — Discovery / Social (never sole basis for major alerts)
+  # ==========================================================================
+
+  - source_id: "S:x:semianalysis"
+    name: "SemiAnalysis (Dylan Patel) — X + Substack"
+    url: "https://www.semianalysis.com"
+    feed_url: "https://www.semianalysis.com/feed"
+    fetch_method: rss
+    language: en
+    tier: 3
+    reliability: 0.65
+    earliness: 0.80
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, INTERCONNECT_NETWORKING, POWER_DELIVERY_EQUIP]
+    notes: "Influential semiconductor blog. Paywalled deep dives but RSS gives titles + teaser. Titles alone are often signal-rich."
+
+  - source_id: "S:x:curated_accounts"
+    name: "Curated X/Twitter accounts"
+    url: "https://x.com"
+    fetch_method: scrape_js  # X API or third-party scraper
+    language: en
+    tier: 3
+    reliability: 0.50
+    earliness: 0.85
+    schedule_minutes: 60
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, PCB_MATERIALS, INTERCONNECT_NETWORKING]
+    notes: |
+      Curated list of accounts. Maintain separately in seeds/x_accounts.yml.
+      High earliness but low reliability — use for discovery, require cross-confirmation.
+      Key accounts to seed: semiconductor analysts, supply chain trackers, equipment OEM watchers.
+
+  - source_id: "S:reddit:semicondutors"
+    name: "Reddit r/semiconductors + r/hardware"
+    url: "https://www.reddit.com/r/semiconductors/"
+    feed_url: "https://www.reddit.com/r/semiconductors/new.json"
+    fetch_method: api
+    language: en
+    tier: 3
+    reliability: 0.40
+    earliness: 0.60
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING]
+    notes: "Low reliability but occasionally surfaces niche reports or links to trade press articles before they get wider pickup."
+
+  # ==========================================================================
+  # WEB SEARCH SWEEPS — Active source discovery
+  # ==========================================================================
+  # These are NOT static feeds. They are periodic keyword searches that find
+  # articles from ANY domain on the open web. This is how the system discovers
+  # sources and stories it doesn't know about yet.
+
+  - source_id: "S:search:constraint_en"
+    name: "Web search — English constraint keywords"
+    fetch_method: web_search
+    language: en
+    tier: 3  # discovered articles start at tier 3, domains get promoted over time
+    schedule_minutes: 120
+    search_queries:
+      # These rotate. System picks 2-3 per sweep to avoid rate limits.
+      - '"semiconductor shortage" OR "chip shortage" allocation lead time'
+      - '"glass cloth" OR "glass fiber" semiconductor substrate shortage'
+      - '"ABF film" OR "build-up film" shortage allocation'
+      - '"HBM" OR "high bandwidth memory" allocation yield shortage'
+      - '"CoWoS" OR "advanced packaging" capacity bottleneck'
+      - '"optical transceiver" shortage "lead time" OR allocation'
+      - '"transformer" OR "switchgear" backlog "lead time" datacenter'
+      - '"liquid cooling" datacenter shortage OR allocation OR "lead time"'
+      - '"data center" permitting OR interconnection queue delay'
+      - '"copper foil" OR "copper clad laminate" shortage semiconductor'
+    notes: "Rotates through queries. New domains found here enter the source discovery pipeline."
+
+  - source_id: "S:search:constraint_ja"
+    name: "Web search — Japanese constraint keywords"
+    fetch_method: web_search
+    language: ja
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - 'ガラスクロス 供給不足 半導体'    # glass cloth shortage semiconductor
+      - 'ABF フィルム 供給 逼迫'           # ABF film supply tight
+      - 'HBM メモリ 割り当て 歩留まり'     # HBM memory allocation yield
+      - '先端パッケージング 供給能力 不足'  # advanced packaging capacity shortage
+      - '光トランシーバー 納期 延長'        # optical transceiver lead time extended
+      - '変圧器 リードタイム データセンター' # transformer lead time datacenter
+      - '基板材料 供給逼迫'                # substrate materials supply tight
+    notes: "Japanese-language discovery. Finds niche Japanese trade pubs and supplier news not in seed list."
+
+  - source_id: "S:search:constraint_ko"
+    name: "Web search — Korean constraint keywords"
+    fetch_method: web_search
+    language: ko
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - 'HBM 공급 부족 수율'              # HBM supply shortage yield
+      - '반도체 기판 공급난'               # semiconductor substrate supply difficulty
+      - 'SK하이닉스 할당 리드타임'          # SK Hynix allocation lead time
+      - '선단 패키징 병목'                  # advanced packaging bottleneck
+      - '광트랜시버 공급 부족'              # optical transceiver supply shortage
+    notes: "Korean-language discovery. Catches Korean semiconductor press and supplier announcements."
+
+  - source_id: "S:search:constraint_zh"
+    name: "Web search — Chinese constraint keywords"
+    fetch_method: web_search
+    language: zh
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - '玻璃布 短缺 半导体 基板'          # glass cloth shortage semiconductor substrate
+      - 'ABF膜 供应紧张'                   # ABF film supply tight
+      - 'HBM 产能 分配'                    # HBM capacity allocation
+      - '先进封装 产能不足'                 # advanced packaging capacity insufficient
+      - '光模块 交期 延长'                  # optical module lead time extended
+      - '变压器 交期 数据中心'              # transformer lead time data center
+    notes: "Chinese-language discovery. Finds mainland Chinese semiconductor media and supplier news."
+
+  # ==========================================================================
+  # TAIWAN — Critical: TSMC, ASE, MediaTek, UMC home market
+  # ==========================================================================
+
+  - source_id: "S:technews_tw"
+    name: "TechNews Taiwan (科技新報)"
+    url: "https://technews.tw"
+    feed_url: "https://technews.tw/feed/"
+    fetch_method: rss
+    language: zh-tw
+    tier: 1
+    reliability: 0.80
+    earliness: 0.85
+    schedule_minutes: 60
+    layers: [COMPUTE_SILICON, ADV_PACKAGING, MEMORY]
+    notes: "Major Taiwanese tech news site. Breaks TSMC/ASE/MediaTek supply chain stories before English press."
+
+  - source_id: "S:ctee"
+    name: "Commercial Times (工商時報)"
+    url: "https://ctee.com.tw"
+    feed_url: "https://ctee.com.tw/feed"
+    fetch_method: rss
+    language: zh-tw
+    tier: 1
+    reliability: 0.75
+    earliness: 0.85
+    schedule_minutes: 60
+    layers: [COMPUTE_SILICON, ADV_PACKAGING, SUBSTRATES_FILMS]
+    notes: "Leading Taiwanese financial daily. Covers semiconductor earnings, fab utilization, substrate supply."
+
+  - source_id: "S:search:constraint_tw"
+    name: "Web search — Taiwanese constraint keywords"
+    fetch_method: web_search
+    language: zh-tw
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - '台積電 產能 吃緊 先進封裝'        # TSMC capacity tight advanced packaging
+      - 'ABF 載板 供應 短缺'               # ABF substrate supply shortage
+      - '玻璃纖維布 缺貨 PCB'              # glass fiber cloth shortage PCB
+      - 'HBM 良率 產能 配額'               # HBM yield capacity allocation
+      - 'CoWoS 產能不足 交期'              # CoWoS capacity insufficient lead time
+      - '半導體 基板 材料 供應鏈'           # semiconductor substrate materials supply chain
+      - '日月光 封裝 產能'                  # ASE packaging capacity
+    notes: "Traditional Chinese discovery. Taiwanese press uses traditional characters."
+
+  # ==========================================================================
+  # INDIA — Growing OSAT/fab ecosystem
+  # ==========================================================================
+
+  - source_id: "S:livemint"
+    name: "Mint / LiveMint"
+    url: "https://www.livemint.com/technology"
+    feed_url: "https://www.livemint.com/rss/technology"
+    fetch_method: rss
+    language: en
+    tier: 2
+    reliability: 0.70
+    earliness: 0.60
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, DATACENTER_BUILD_PERMIT]
+    notes: "Indian financial daily. Covers Tata fab, HCL-Foxconn OSAT, Indian semiconductor policy."
+
+  - source_id: "S:economictimes_tech"
+    name: "Economic Times Tech"
+    url: "https://economictimes.indiatimes.com/tech"
+    feed_url: "https://economictimes.indiatimes.com/rssfeedstopstories.cms"
+    fetch_method: rss
+    language: en
+    tier: 2
+    reliability: 0.65
+    earliness: 0.55
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, DATACENTER_BUILD_PERMIT]
+    notes: "Largest Indian business paper. Vedanta-Foxconn, Tata, datacenter boom coverage."
+
+  - source_id: "S:search:constraint_in"
+    name: "Web search — India semiconductor keywords"
+    fetch_method: web_search
+    language: en
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - 'India semiconductor fab OSAT Tata Vedanta manufacturing'
+      - 'India data center construction power grid capacity'
+      - '"India" "chip packaging" OR "OSAT" OR "assembly test" investment'
+      - '"India" "rare earth" OR "critical minerals" supply chain'
+    notes: "India semiconductor ecosystem. English works well for Indian press."
+
+  # ==========================================================================
+  # LATAM — Nearshoring, critical minerals, emerging datacenter markets
+  # ==========================================================================
+
+  - source_id: "S:search:constraint_es"
+    name: "Web search — Spanish constraint keywords"
+    fetch_method: web_search
+    language: es
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - 'nearshoring semiconductor México manufactura chip'
+      - 'centro de datos México construcción energía capacidad'
+      - '"cadena de suministro" semiconductor escasez chip'
+      - 'litio Argentina Chile producción capacidad minería'
+      - 'Foxconn Samsung manufactura México Nuevo León'
+      - 'transformadores eléctricos datacenter demora entrega'
+    notes: "Spanish-language discovery for Mexico, Argentina, Chile, Spain. Nearshoring + critical minerals."
+
+  - source_id: "S:search:constraint_pt"
+    name: "Web search — Portuguese constraint keywords"
+    fetch_method: web_search
+    language: pt
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - 'data center Brasil construção energia capacidade São Paulo'
+      - 'nióbio terras raras minerais críticos Brasil cadeia suprimentos'
+      - 'semicondutores cadeia suprimentos escassez América Latina'
+      - 'lítio Argentina Chile produção exportação'
+    notes: "Portuguese-language for Brazil. Critical minerals (niobium, rare earths) + datacenter growth."
+
+  # ==========================================================================
+  # GERMANY — Automotive chips, Infineon, Bosch, equipment (Zeiss)
+  # ==========================================================================
+
+  - source_id: "S:search:constraint_de"
+    name: "Web search — German constraint keywords"
+    fetch_method: web_search
+    language: de
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - 'Halbleiter Engpass Lieferzeit Infineon Bosch'
+      - 'Chipknappheit Automotive Lieferkette Deutschland'
+      - 'Rechenzentrum Genehmigung Strom Netzanschluss Deutschland'
+      - 'ASML Zeiss EUV Lieferengpass'
+    notes: "German-language for Infineon, Bosch, automotive chip constraints, datacenter permitting."
+
+  # ==========================================================================
+  # SOUTHEAST ASIA — OSAT hubs (Malaysia, Vietnam, Thailand)
+  # ==========================================================================
+
+  - source_id: "S:search:constraint_sea"
+    name: "Web search — Southeast Asia semiconductor keywords"
+    fetch_method: web_search
+    language: en
+    tier: 3
+    schedule_minutes: 240
+    search_queries:
+      - 'Malaysia semiconductor packaging assembly Intel Penang Amkor'
+      - 'Vietnam chip manufacturing Samsung factory expansion'
+      - 'Thailand semiconductor supply chain Hana Microelectronics'
+      - '"Southeast Asia" OSAT capacity packaging bottleneck'
+    notes: "SE Asia OSAT coverage. English works for Malaysian/Vietnamese press."
+
+  # ==========================================================================
+  # JAPAN — Broader financial/tech press (not just company IR)
+  # ==========================================================================
+
+  - source_id: "S:japantimes"
+    name: "Japan Times Business"
+    url: "https://www.japantimes.co.jp/business/"
+    feed_url: "https://www.japantimes.co.jp/feed/"
+    fetch_method: rss
+    language: en
+    tier: 2
+    reliability: 0.70
+    earliness: 0.60
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, SUBSTRATES_FILMS, ADV_PACKAGING]
+    notes: "English-language Japanese news. Covers Rapidus, material suppliers, industrial policy."
+
+  - source_id: "S:semiconductor_today"
+    name: "Semiconductor Today"
+    url: "https://www.semiconductor-today.com"
+    scrape_target: "https://www.semiconductor-today.com/news_items/"
+    fetch_method: scrape_html
+    language: en
+    tier: 1
+    reliability: 0.80
+    earliness: 0.75
+    schedule_minutes: 120
+    layers: [COMPUTE_SILICON, ADV_PACKAGING, SUBSTRATES_FILMS]
+    notes: "Global semiconductor trade publication. Covers compound semi, SiC, packaging, substrates."

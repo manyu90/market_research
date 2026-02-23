@@ -1,0 +1,27 @@
+# LLM Configuration
+# Using Chinese LLMs via OpenRouter — cheap, fast, good enough for all pipeline stages.
+# No model tiering needed. One model handles extraction, translation, synthesis, and alerting.
+
+provider: openrouter
+base_url: "https://openrouter.ai/api/v1"
+api_key_env: "OPENROUTER_API_KEY"  # set in environment / .env
+
+# Pick one. Both are strong, cheap, and handle multilingual well.
+# Uncomment whichever you're using:
+model: "minimax/minimax-m2.5"
+# model: "minimax/minimax-m1-80k"
+# model: "moonshotai/kimi-k2"
+
+# All pipeline stages use the same model. No tiering.
+# If you ever want per-stage overrides, add them here:
+# overrides:
+#   event_extractor: "moonshotai/kimi-k2"
+#   thesis_writer: "minimax/minimax-m1-80k"
+
+# Request defaults
+defaults:
+  temperature: 0.2          # low temp for structured extraction
+  max_tokens: 4096
+  timeout_seconds: 60
+  retries: 3
+  retry_backoff_seconds: 5

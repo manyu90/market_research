@@ -1,0 +1,663 @@
+# ============================================================================
+# AI Constraints Radar — SEED Entity Registry
+# ============================================================================
+# This is a BOOTSTRAP file, NOT the complete entity registry.
+# It pre-loads well-known players so the system doesn't start from zero.
+#
+# The REAL entity registry lives in Postgres and GROWS AUTOMATICALLY:
+#   1. LLM extractor finds a company/material/facility in an article
+#   2. Entity linker checks: known or new?
+#   3. If NEW → provisional entity record (status: DISCOVERED)
+#   4. If mention_count crosses threshold → promoted to CONFIRMED
+#   5. You get notified: "New player discovered in {layer}"
+#
+# This file is loaded ONCE at system init. After that, all entity
+# management happens in the database via the discovery pipeline.
+#
+# Roles:
+#   SUPPLIER       — makes/sells the constrained object
+#   BUYER          — purchases/consumes the constrained object
+#   DEMAND_DRIVER  — downstream company whose demand creates the constraint
+#   OEM            — equipment/tool maker
+#   REGULATOR      — government body with policy power
+#
+# Rings (tradable mapping):
+#   A = pure play on the constraint (constrained supplier)
+#   B = adjacent winner (equipment, substitutes, second source)
+#   C = expression vehicle (ETF, country index)
+# ============================================================================
+
+entities:
+
+  # ==========================================================================
+  # COMPUTE_SILICON
+  # ==========================================================================
+
+  - entity_id: "E:company:tsmc"
+    canonical_name: "TSMC"
+    type: COMPANY
+    aliases:
+      en: ["Taiwan Semiconductor", "Taiwan Semiconductor Manufacturing", "TSMC"]
+      zh: ["台積電", "台灣積體電路"]
+      ja: ["TSMC", "台湾セミコンダクター"]
+    tickers:
+      - exchange: TWSE
+        ticker: "2330"
+      - exchange: NYSE
+        ticker: "TSM"
+    roles: [SUPPLIER]
+    layers: [COMPUTE_SILICON, ADV_PACKAGING]
+    ring: A
+    geo: TW
+    notes: "Dominates leading-edge foundry. CoWoS advanced packaging is a key bottleneck."
+
+  - entity_id: "E:company:samsung_semi"
+    canonical_name: "Samsung Electronics (Semiconductor)"
+    type: COMPANY
+    aliases:
+      en: ["Samsung Semiconductor", "Samsung Foundry", "Samsung Electronics"]
+      ko: ["삼성전자", "삼성 반도체"]
+      ja: ["サムスン電子"]
+    tickers:
+      - exchange: KRX
+        ticker: "005930"
+    roles: [SUPPLIER]
+    layers: [COMPUTE_SILICON, MEMORY]
+    ring: A
+    geo: KR
+    notes: "Second-largest foundry. Major DRAM/NAND supplier. HBM competitor to SK Hynix."
+
+  - entity_id: "E:company:intel"
+    canonical_name: "Intel"
+    type: COMPANY
+    aliases:
+      en: ["Intel", "Intel Foundry Services", "IFS"]
+      zh: ["英特尔"]
+      ja: ["インテル"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "INTC"
+    roles: [SUPPLIER, BUYER]
+    layers: [COMPUTE_SILICON]
+    ring: B
+    geo: US
+
+  - entity_id: "E:company:globalfoundries"
+    canonical_name: "GlobalFoundries"
+    type: COMPANY
+    aliases:
+      en: ["GlobalFoundries", "GF", "GloFo"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "GFS"
+    roles: [SUPPLIER]
+    layers: [COMPUTE_SILICON]
+    ring: B
+    geo: US
+
+  # ==========================================================================
+  # MEMORY (HBM / DRAM)
+  # ==========================================================================
+
+  - entity_id: "E:company:sk_hynix"
+    canonical_name: "SK Hynix"
+    type: COMPANY
+    aliases:
+      en: ["SK Hynix", "SK hynix", "Hynix"]
+      ko: ["SK하이닉스", "에스케이하이닉스"]
+      ja: ["SKハイニックス"]
+    tickers:
+      - exchange: KRX
+        ticker: "000660"
+    roles: [SUPPLIER]
+    layers: [MEMORY]
+    ring: A
+    geo: KR
+    notes: "Dominant HBM supplier. HBM3E/HBM4 leader. Primary NVIDIA HBM vendor."
+
+  - entity_id: "E:company:micron"
+    canonical_name: "Micron Technology"
+    type: COMPANY
+    aliases:
+      en: ["Micron", "Micron Technology"]
+      zh: ["美光"]
+      ja: ["マイクロン"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "MU"
+    roles: [SUPPLIER]
+    layers: [MEMORY]
+    ring: A
+    geo: US
+    notes: "Third HBM player. Entering HBM market — watch qualification status."
+
+  # ==========================================================================
+  # ADV_PACKAGING
+  # ==========================================================================
+
+  - entity_id: "E:company:ase"
+    canonical_name: "ASE Technology"
+    type: COMPANY
+    aliases:
+      en: ["ASE Technology", "ASE Group", "ASE Industrial"]
+      zh: ["日月光", "日月光投控"]
+    tickers:
+      - exchange: TWSE
+        ticker: "3711"
+      - exchange: NYSE
+        ticker: "ASX"
+    roles: [SUPPLIER]
+    layers: [ADV_PACKAGING]
+    ring: A
+    geo: TW
+    notes: "World's largest OSAT. Advanced packaging services."
+
+  - entity_id: "E:company:amkor"
+    canonical_name: "Amkor Technology"
+    type: COMPANY
+    aliases:
+      en: ["Amkor", "Amkor Technology"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "AMKR"
+    roles: [SUPPLIER]
+    layers: [ADV_PACKAGING]
+    ring: A
+    geo: US
+
+  # ==========================================================================
+  # SUBSTRATES_FILMS (ABF + advanced substrates)
+  # ==========================================================================
+
+  - entity_id: "E:company:ajinomoto_ft"
+    canonical_name: "Ajinomoto Fine-Techno"
+    type: COMPANY
+    aliases:
+      en: ["Ajinomoto Fine-Techno", "AFT", "Ajinomoto Build-up Film"]
+      ja: ["味の素ファインテクノ", "ABF"]
+    tickers:
+      - exchange: TSE
+        ticker: "2802"
+        notes: "Parent company Ajinomoto Co."
+    roles: [SUPPLIER]
+    layers: [SUBSTRATES_FILMS]
+    ring: A
+    geo: JP
+    notes: "Near-monopoly on ABF insulation film. Critical for all advanced CPU/GPU substrates. Subsidiary of Ajinomoto Co."
+
+  - entity_id: "E:company:ibiden"
+    canonical_name: "Ibiden"
+    type: COMPANY
+    aliases:
+      en: ["Ibiden", "IBIDEN CO"]
+      ja: ["イビデン"]
+    tickers:
+      - exchange: TSE
+        ticker: "4062"
+    roles: [SUPPLIER]
+    layers: [SUBSTRATES_FILMS, ADV_PACKAGING]
+    ring: A
+    geo: JP
+    notes: "Major IC package substrate maker. Key Intel/AMD supplier."
+
+  - entity_id: "E:company:shinko"
+    canonical_name: "Shinko Electric Industries"
+    type: COMPANY
+    aliases:
+      en: ["Shinko Electric", "Shinko Electric Industries"]
+      ja: ["新光電気工業"]
+    tickers: []  # DELISTED June 2025 — taken private by JIC consortium
+    roles: [SUPPLIER]
+    layers: [SUBSTRATES_FILMS, ADV_PACKAGING]
+    ring: A
+    geo: JP
+    notes: "Delisted TSE June 2025 (formerly 6967). Taken private by JIC + DNP + Mitsui Chemicals. Still major substrate supplier."
+
+  - entity_id: "E:company:unimicron"
+    canonical_name: "Unimicron"
+    type: COMPANY
+    aliases:
+      en: ["Unimicron", "Unimicron Technology"]
+      zh: ["欣興電子"]
+    tickers:
+      - exchange: TWSE
+        ticker: "3037"
+    roles: [SUPPLIER]
+    layers: [SUBSTRATES_FILMS, ADV_PACKAGING]
+    ring: A
+    geo: TW
+    notes: "Major ABF substrate maker. Taiwan-based."
+
+  # ==========================================================================
+  # PCB_MATERIALS (glass cloth, copper foil, laminates)
+  # ==========================================================================
+
+  - entity_id: "E:company:nittobo"
+    canonical_name: "Nittobo (Nitto Boseki)"
+    type: COMPANY
+    aliases:
+      en: ["Nittobo", "Nitto Boseki", "Nitto Boseki Corporation"]
+      ja: ["日東紡績", "日東紡", "ニットーボー"]
+    tickers:
+      - exchange: TSE
+        ticker: "3110"
+    roles: [SUPPLIER]
+    layers: [PCB_MATERIALS]
+    ring: A
+    geo: JP
+    notes: "Dominant in low-CTE glass cloth / T-glass for high-end PCB substrates. Single-source risk. Courted by Apple, NVIDIA, Google, Amazon."
+
+  - entity_id: "E:company:isola"
+    canonical_name: "Isola Group"
+    type: COMPANY
+    aliases:
+      en: ["Isola", "Isola Group"]
+    tickers: []  # Private
+    roles: [SUPPLIER]
+    layers: [PCB_MATERIALS]
+    ring: A
+    geo: US
+    notes: "High-performance laminate and prepreg materials. Private company."
+
+  - entity_id: "E:company:mitsubishi_gas"
+    canonical_name: "Mitsubishi Gas Chemical"
+    type: COMPANY
+    aliases:
+      en: ["Mitsubishi Gas Chemical", "MGC"]
+      ja: ["三菱ガス化学"]
+    tickers:
+      - exchange: TSE
+        ticker: "4182"
+    roles: [SUPPLIER]
+    layers: [PCB_MATERIALS, SUBSTRATES_FILMS]
+    ring: A
+    geo: JP
+    notes: "BT resin (bismaleimide triazine) for IC substrates. Key material supplier."
+
+  - entity_id: "E:company:resonac"
+    canonical_name: "Resonac (formerly Showa Denko)"
+    type: COMPANY
+    aliases:
+      en: ["Resonac", "Showa Denko", "Showa Denko Materials", "SDK"]
+      ja: ["レゾナック", "昭和電工"]
+    tickers:
+      - exchange: TSE
+        ticker: "4004"
+    roles: [SUPPLIER]
+    layers: [PCB_MATERIALS, SUBSTRATES_FILMS]
+    ring: A
+    geo: JP
+    notes: "Semiconductor materials including CMP slurries, photoresists, encapsulants. Merged with Hitachi Chemical."
+
+  - entity_id: "E:company:nan_ya_plastics"
+    canonical_name: "Nan Ya Plastics"
+    type: COMPANY
+    aliases:
+      en: ["Nan Ya Plastics", "Nan Ya PCB"]
+      zh: ["南亞塑膠"]
+    tickers:
+      - exchange: TWSE
+        ticker: "1303"
+    roles: [SUPPLIER]
+    layers: [PCB_MATERIALS]
+    ring: B
+    geo: TW
+    notes: "Copper-clad laminates and PCB materials. Formosa Plastics Group subsidiary."
+
+  # ==========================================================================
+  # INTERCONNECT_NETWORKING
+  # ==========================================================================
+
+  - entity_id: "E:company:coherent"
+    canonical_name: "Coherent (formerly II-VI)"
+    type: COMPANY
+    aliases:
+      en: ["Coherent", "Coherent Corp", "II-VI", "II-VI Incorporated"]
+    tickers:
+      - exchange: NYSE
+        ticker: "COHR"
+    roles: [SUPPLIER]
+    layers: [INTERCONNECT_NETWORKING]
+    ring: A
+    geo: US
+    notes: "Optical transceivers and components. Major 800G/1.6T supplier."
+
+  - entity_id: "E:company:lumentum"
+    canonical_name: "Lumentum"
+    type: COMPANY
+    aliases:
+      en: ["Lumentum", "Lumentum Holdings"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "LITE"
+    roles: [SUPPLIER]
+    layers: [INTERCONNECT_NETWORKING]
+    ring: A
+    geo: US
+
+  - entity_id: "E:company:fabrinet"
+    canonical_name: "Fabrinet"
+    type: COMPANY
+    aliases:
+      en: ["Fabrinet"]
+    tickers:
+      - exchange: NYSE
+        ticker: "FN"
+    roles: [SUPPLIER]
+    layers: [INTERCONNECT_NETWORKING]
+    ring: A
+    geo: TH
+    notes: "Contract manufacturer for optical components. Thailand-based."
+
+  - entity_id: "E:company:innolight"
+    canonical_name: "Zhongji Innolight"
+    type: COMPANY
+    aliases:
+      en: ["Innolight", "Zhongji Innolight", "ZJ Innolight"]
+      zh: ["中际旭创", "旭创科技"]
+    tickers:
+      - exchange: SZSE
+        ticker: "300308"
+    roles: [SUPPLIER]
+    layers: [INTERCONNECT_NETWORKING]
+    ring: A
+    geo: CN
+    notes: "World's largest optical transceiver maker. Major AI datacenter supplier (800G/1.6T)."
+
+  - entity_id: "E:company:broadcom"
+    canonical_name: "Broadcom"
+    type: COMPANY
+    aliases:
+      en: ["Broadcom", "Broadcom Inc"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "AVGO"
+    roles: [SUPPLIER]
+    layers: [INTERCONNECT_NETWORKING, COMPUTE_SILICON]
+    ring: A
+    geo: US
+    notes: "Networking ASICs (Memory, custom AI chips (TPU for Google). Dominant in ethernet switches."
+
+  # ==========================================================================
+  # POWER_DELIVERY_EQUIP
+  # ==========================================================================
+
+  - entity_id: "E:company:vertiv"
+    canonical_name: "Vertiv"
+    type: COMPANY
+    aliases:
+      en: ["Vertiv", "Vertiv Holdings"]
+    tickers:
+      - exchange: NYSE
+        ticker: "VRT"
+    roles: [SUPPLIER]
+    layers: [POWER_DELIVERY_EQUIP, THERMAL_COOLING]
+    ring: A
+    geo: US
+    notes: "Power management and thermal management for data centers. PDUs, UPS, cooling."
+
+  - entity_id: "E:company:eaton"
+    canonical_name: "Eaton Corporation"
+    type: COMPANY
+    aliases:
+      en: ["Eaton", "Eaton Corporation"]
+    tickers:
+      - exchange: NYSE
+        ticker: "ETN"
+    roles: [SUPPLIER]
+    layers: [POWER_DELIVERY_EQUIP]
+    ring: A
+    geo: US
+    notes: "Power distribution, switchgear, transformers. Major grid equipment maker."
+
+  - entity_id: "E:company:schneider"
+    canonical_name: "Schneider Electric"
+    type: COMPANY
+    aliases:
+      en: ["Schneider Electric", "Schneider"]
+      fr: ["Schneider Electric"]
+    tickers:
+      - exchange: EPA
+        ticker: "SU"
+    roles: [SUPPLIER]
+    layers: [POWER_DELIVERY_EQUIP]
+    ring: A
+    geo: FR
+
+  - entity_id: "E:company:ge_vernova"
+    canonical_name: "GE Vernova"
+    type: COMPANY
+    aliases:
+      en: ["GE Vernova", "GE Power", "GE Gas Power"]
+    tickers:
+      - exchange: NYSE
+        ticker: "GEV"
+    roles: [SUPPLIER]
+    layers: [POWER_DELIVERY_EQUIP, FUEL_ONSITE_POWER]
+    ring: A
+    geo: US
+    notes: "Gas turbines, grid equipment, transformers. Spun off from GE."
+
+  - entity_id: "E:company:siemens_energy"
+    canonical_name: "Siemens Energy"
+    type: COMPANY
+    aliases:
+      en: ["Siemens Energy"]
+      de: ["Siemens Energy"]
+    tickers:
+      - exchange: XETR
+        ticker: "ENR"
+    roles: [SUPPLIER]
+    layers: [POWER_DELIVERY_EQUIP, FUEL_ONSITE_POWER]
+    ring: A
+    geo: DE
+
+  # ==========================================================================
+  # THERMAL_COOLING
+  # ==========================================================================
+
+  - entity_id: "E:company:nvent"
+    canonical_name: "nVent Electric"
+    type: COMPANY
+    aliases:
+      en: ["nVent", "nVent Electric"]
+    tickers:
+      - exchange: NYSE
+        ticker: "NVT"
+    roles: [SUPPLIER]
+    layers: [THERMAL_COOLING]
+    ring: A
+    geo: US
+
+  - entity_id: "E:company:modine"
+    canonical_name: "Modine Manufacturing"
+    type: COMPANY
+    aliases:
+      en: ["Modine", "Modine Manufacturing"]
+    tickers:
+      - exchange: NYSE
+        ticker: "MOD"
+    roles: [SUPPLIER]
+    layers: [THERMAL_COOLING]
+    ring: A
+    geo: US
+    notes: "Liquid cooling for data centers. Growing AI cooling business."
+
+  # ==========================================================================
+  # FUEL_ONSITE_POWER
+  # ==========================================================================
+
+  - entity_id: "E:company:caterpillar"
+    canonical_name: "Caterpillar"
+    type: COMPANY
+    aliases:
+      en: ["Caterpillar", "CAT"]
+    tickers:
+      - exchange: NYSE
+        ticker: "CAT"
+    roles: [SUPPLIER]
+    layers: [FUEL_ONSITE_POWER]
+    ring: B
+    geo: US
+    notes: "Diesel/gas gensets for backup and on-site power."
+
+  - entity_id: "E:company:mhi"
+    canonical_name: "Mitsubishi Heavy Industries"
+    type: COMPANY
+    aliases:
+      en: ["Mitsubishi Heavy Industries", "MHI"]
+      ja: ["三菱重工業", "三菱重工"]
+    tickers:
+      - exchange: TSE
+        ticker: "7011"
+    roles: [SUPPLIER]
+    layers: [FUEL_ONSITE_POWER]
+    ring: B
+    geo: JP
+    notes: "Gas turbines (GTCC). Nuclear reactor components."
+
+  # ==========================================================================
+  # DEMAND DRIVERS (Buyers / Hyperscalers)
+  # ==========================================================================
+
+  - entity_id: "E:company:nvidia"
+    canonical_name: "NVIDIA"
+    type: COMPANY
+    aliases:
+      en: ["NVIDIA", "Nvidia"]
+      zh: ["英伟达"]
+      ja: ["エヌビディア"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "NVDA"
+    roles: [DEMAND_DRIVER, BUYER]
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, SUBSTRATES_FILMS, PCB_MATERIALS, INTERCONNECT_NETWORKING]
+    geo: US
+    notes: "Primary demand driver for AI compute stack. Demand beacon — track supplier stress, not NVDA headlines."
+
+  - entity_id: "E:company:apple"
+    canonical_name: "Apple"
+    type: COMPANY
+    aliases:
+      en: ["Apple", "Apple Inc"]
+      zh: ["苹果"]
+      ja: ["アップル"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "AAPL"
+    roles: [DEMAND_DRIVER, BUYER]
+    layers: [COMPUTE_SILICON, ADV_PACKAGING, SUBSTRATES_FILMS, PCB_MATERIALS]
+    geo: US
+
+  - entity_id: "E:company:google"
+    canonical_name: "Alphabet / Google"
+    type: COMPANY
+    aliases:
+      en: ["Google", "Alphabet", "Google Cloud"]
+      zh: ["谷歌"]
+      ja: ["グーグル"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "GOOGL"
+    roles: [DEMAND_DRIVER, BUYER]
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING, INTERCONNECT_NETWORKING, DATACENTER_BUILD_PERMIT]
+    geo: US
+
+  - entity_id: "E:company:amazon"
+    canonical_name: "Amazon / AWS"
+    type: COMPANY
+    aliases:
+      en: ["Amazon", "AWS", "Amazon Web Services"]
+      zh: ["亚马逊"]
+      ja: ["アマゾン"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "AMZN"
+    roles: [DEMAND_DRIVER, BUYER]
+    layers: [COMPUTE_SILICON, MEMORY, INTERCONNECT_NETWORKING, DATACENTER_BUILD_PERMIT, POWER_DELIVERY_EQUIP]
+    geo: US
+
+  - entity_id: "E:company:microsoft"
+    canonical_name: "Microsoft"
+    type: COMPANY
+    aliases:
+      en: ["Microsoft", "Azure", "Microsoft Azure"]
+      zh: ["微软"]
+      ja: ["マイクロソフト"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "MSFT"
+    roles: [DEMAND_DRIVER, BUYER]
+    layers: [COMPUTE_SILICON, MEMORY, DATACENTER_BUILD_PERMIT, POWER_DELIVERY_EQUIP]
+    geo: US
+
+  - entity_id: "E:company:meta"
+    canonical_name: "Meta Platforms"
+    type: COMPANY
+    aliases:
+      en: ["Meta", "Meta Platforms", "Facebook"]
+      zh: ["Meta", "脸书"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "META"
+    roles: [DEMAND_DRIVER, BUYER]
+    layers: [COMPUTE_SILICON, MEMORY, DATACENTER_BUILD_PERMIT]
+    geo: US
+
+  - entity_id: "E:company:bytedance"
+    canonical_name: "ByteDance"
+    type: COMPANY
+    aliases:
+      en: ["ByteDance", "TikTok"]
+      zh: ["字节跳动"]
+    tickers: []  # Private
+    roles: [DEMAND_DRIVER, BUYER]
+    layers: [COMPUTE_SILICON, MEMORY]
+    geo: CN
+    notes: "Private. Massive GPU/AI infra buyer. Watch for procurement signals."
+
+  # ==========================================================================
+  # EXPRESSION VEHICLES (Ring C — indices / ETFs)
+  # ==========================================================================
+
+  - entity_id: "E:index:soxx"
+    canonical_name: "iShares Semiconductor ETF"
+    type: INDEX
+    aliases:
+      en: ["SOXX", "Semiconductor ETF"]
+    tickers:
+      - exchange: NASDAQ
+        ticker: "SOXX"
+    roles: []
+    layers: [COMPUTE_SILICON, MEMORY, ADV_PACKAGING]
+    ring: C
+    notes: "Broad US semiconductor exposure."
+
+  - entity_id: "E:index:kospi"
+    canonical_name: "KOSPI (Korea Composite)"
+    type: INDEX
+    aliases:
+      en: ["KOSPI", "Korea Index"]
+      ko: ["코스피"]
+    tickers:
+      - exchange: NYSE
+        ticker: "EWY"
+        notes: "iShares MSCI South Korea ETF"
+    roles: []
+    layers: [MEMORY, COMPUTE_SILICON]
+    ring: C
+    notes: "Memory-heavy. Samsung + SK Hynix = ~30% of index."
+
+  - entity_id: "E:index:nikkei_materials"
+    canonical_name: "Japan Materials / Nikkei"
+    type: INDEX
+    aliases:
+      en: ["Nikkei", "Japan ETF"]
+    tickers:
+      - exchange: NYSE
+        ticker: "EWJ"
+        notes: "iShares MSCI Japan ETF"
+    roles: []
+    layers: [PCB_MATERIALS, SUBSTRATES_FILMS, ADV_PACKAGING]
+    ring: C
+    notes: "Japan materials cluster: Nittobo, Ibiden, Ajinomoto, Resonac, MGC."

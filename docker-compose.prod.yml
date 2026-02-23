@@ -1,0 +1,23 @@
+# Production overlay: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  db:
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  radar:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"

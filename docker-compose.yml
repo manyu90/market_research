@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: radar
+      POSTGRES_DB: ai_constraints
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar -d ai_constraints"]
+      interval: 5s
+      retries: 5
+
+  pipeline:
+    build: .
+    command: ["python", "scripts/run_pipeline.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://radar:radar@db:5432/ai_constraints
+    volumes:
+      - ./logs:/app/logs
+    restart: always
+
+  api:
+    build: .
+    command: ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://radar:radar@db:5432/ai_constraints
+    ports:
+      - "8000:8000"
+    restart: always
+
+volumes:
+  pgdata:
